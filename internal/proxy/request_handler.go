@@ -22,7 +22,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request, servers map[string][]
 
 	var matched *routeInfo
 	for _, rt := range routes {
-		routePrefix := rt.rf.Path
+		routePrefix := rt.routeConfig.Path
 		strippedPath := r.URL.Path
 
 		if strings.HasSuffix(routePrefix, "/**") {
@@ -46,7 +46,6 @@ func handleRequest(w http.ResponseWriter, r *http.Request, servers map[string][]
 				break
 			}
 
-			// optional: catch-all route
 			if normalizedRoute == "" {
 				matched = &rt
 				break
@@ -60,15 +59,15 @@ func handleRequest(w http.ResponseWriter, r *http.Request, servers map[string][]
 	}
 
 	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
-	if !matched.rl.Allow(ip) {
+	if !matched.rateLimiter.Allow(ip) {
 		w.WriteHeader(http.StatusTooManyRequests)
 		w.Write([]byte("429 Too Many Requests"))
 		return
 	}
 
-	switch matched.rf.Type {
+	switch matched.routeConfig.Type {
 	case "proxy":
-		target := matched.lb.Next()
+		target := matched.loadBalancer.Next()
 		if target == nil {
 			ServerDefaultPage(w)
 			return
@@ -78,14 +77,14 @@ func handleRequest(w http.ResponseWriter, r *http.Request, servers map[string][]
 		proxy.ServeHTTP(w, r)
 
 	case "static":
-		if matched.rf.Dir == "" {
+		if matched.routeConfig.Dir == "" {
 			ServerDefaultPage(w)
 			return
 		}
 
-		buildPath := "./web"
-		staticDir := filepath.Join(buildPath, matched.rf.Dir)
-		requestedFile := filepath.Join(staticDir, r.URL.Path)
+		//buildPath := "./web"
+		staticDir := filepath.Join(matched.routeConfig.Dir)
+		requestedFile := filepath.Join(matched.routeConfig.Dir, r.URL.Path)
 		if info, err := os.Stat(requestedFile); err == nil && !info.IsDir() {
 			http.ServeFile(w, r, requestedFile)
 			return

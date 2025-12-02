@@ -4,15 +4,14 @@ package common
 type RouteConfig struct {
 	Path  string `yaml:"path"`
 	Type  string `yaml:"type,omitempty"`
+	RateLimit int `yaml:"rate_limit,omitempty"`
+	RateWindow int `yaml:"rate_window,omitempty"`
 	Dir   string  `yaml:"dir,omitempty"`
-	LoadBalancer string `yaml:"loadbalancer"`
 	Backends   []string `yaml:"backends"`
 }
 
 type ServerConfig  struct {
 	Domain  string `yaml:"domain"`
-	RateLimit int  `yaml:"rate_limit"`
-	RateWindow int  `yaml:"rate_window"`
 	Routes  []RouteConfig `yaml:"routes"`
 }
 
@@ -21,3 +20,12 @@ type ProxyConfig struct {
 }
 
 
+
+func (r *RouteConfig) ApplyDefaults() {
+    if r.RateLimit == 0 {
+        r.RateLimit = 100   // ← 기본값
+    }
+    if r.RateWindow == 0 {
+        r.RateWindow = 60   // ← 기본값 (초 단위?)
+    }
+}

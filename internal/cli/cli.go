@@ -19,11 +19,12 @@ type CLIOptions struct {
 func ParseCLI() *CLIOptions {
 	opts := &CLIOptions{}
 
-	flag.StringVar(&opts.ConfigPath, "config", "configs/proxy.yaml", "Path to config file")
+	flag.StringVar(&opts.ConfigPath, "config", "configs", "Path to config file")
 	flag.IntVar(&opts.Port, "port", 8000, "Port to run the server")
 	flag.BoolVar(&opts.Test, "t", false, "Test all config files and exit")
 
 	flag.Parse()
+
 
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
@@ -57,6 +58,6 @@ func HandleCLI(opts *CLIOptions) bool {
 		return true
 	}
 
-	// no CLI commands, run daemon
+	
 	return false
 }

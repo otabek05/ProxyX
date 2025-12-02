@@ -8,9 +8,9 @@ import (
 )
 
 type routeInfo struct {
-		lb   *LoadBalancer
-		rl   *RateLimiter
-		rf   *common.RouteConfig
+		loadBalancer   *LoadBalancer
+		rateLimiter   *RateLimiter
+		routeConfig   *common.RouteConfig
 	}
 
 func NewRouter(config *common.ProxyConfig) http.Handler {
@@ -21,7 +21,7 @@ func NewRouter(config *common.ProxyConfig) http.Handler {
 			panic("Domain must be specified ")
 		}
 
-		rl := NewRateLimiter(server.RateLimit, time.Duration(server.RateWindow)*time.Second)
+		//rl := NewRateLimiter(server.RateLimit, time.Duration(server.RateWindow)*time.Second)
 		var routes []routeInfo
 		for _, route := range server.Routes {
 
@@ -38,11 +38,13 @@ func NewRouter(config *common.ProxyConfig) http.Handler {
 				}
 			}
 
-			routes = append(routes, routeInfo{lb: lb, rl: rl, rf: &route})
+			rl := NewRateLimiter(route.RateLimit, time.Duration(route.RateWindow)*time.Second)
+
+			routes = append(routes, routeInfo{loadBalancer: lb, rateLimiter: rl, routeConfig: &route})
 		}
 
 		sort.Slice(routes, func(i, j int) bool {
-			return len(routes[i].rf.Path) > len(routes[j].rf.Path)
+			return len(routes[i].routeConfig.Path) > len(routes[j].routeConfig.Path)
 		})
 		
 		servers[server.Domain] = routes

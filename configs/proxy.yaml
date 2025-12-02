@@ -1,10 +1,10 @@
 servers:
   - domain: localhost
-    rate_limit: 10
-    rate_window: 5
     routes:
       - path: /api/v1/**
-        type: proxy           
+        type: proxy
+        rate_limit: 10
+        rate_window: 5           
         backends:
           - http://localhost:8080
 
@@ -22,7 +22,3 @@ servers:
         type: proxy
         backends:
           - http://localhost:9002
-
-      - path: /**
-        type: static
-        dir: easy365

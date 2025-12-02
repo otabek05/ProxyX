@@ -4,7 +4,7 @@ import (
 	"ProxyX/internal/common"
 	"os"
 	"path/filepath"
-
+	"strings"
 	"gopkg.in/yaml.v2"
 )
 
@@ -30,11 +30,25 @@ func LoadConfig(dir string) (*common.ProxyConfig, error) {
 		mergeConfigs(finalConfig, &cfg)
 	}
 
+
 	return finalConfig, nil
 }
 
 
 
 func mergeConfigs(dst, src *common.ProxyConfig) {
-	dst.Servers = append(dst.Servers, src.Servers...)
+	for _,srcServer := range src.Servers {
+		found := false
+		for i := range dst.Servers {
+			if strings.EqualFold(dst.Servers[i].Domain, srcServer.Domain) {
+				dst.Servers[i].Routes = append(dst.Servers[i].Routes, srcServer.Routes...)
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			dst.Servers = append(dst.Servers, srcServer)
+		}
+	}
 }
