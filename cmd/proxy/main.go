@@ -20,9 +20,5 @@ func main() {
 	}
 
 	srv := proxy.NewServer(config)
-	log.Printf("Starting ProxyX on port %d ...", opts.Port)
-	if err := srv.Start(); err != nil {
-		log.Fatal(err)
-	}
-
+	srv.Start(); 
 }

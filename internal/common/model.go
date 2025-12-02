@@ -15,8 +15,20 @@ type ServerConfig  struct {
 	Routes  []RouteConfig `yaml:"routes"`
 }
 
+
+
 type ProxyConfig struct {
 	Servers  []ServerConfig `yaml:"servers"`
+}
+
+
+func (p *ProxyConfig) ToDomainList() []string {
+	var domains []string
+	for _, server := range p.Servers{
+		domains = append(domains, server.Domain)
+	}
+
+	return domains
 }
 
 
