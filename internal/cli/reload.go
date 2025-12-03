@@ -2,10 +2,7 @@ package cli
 
 import (
 	"fmt"
-	"os"
 	"os/exec"
-	"syscall"
-
 	"github.com/spf13/cobra"
 )
 
@@ -18,33 +15,19 @@ func reloadProxyX() {
 	cmd := exec.Command("sudo", "systemctl", "restart", "proxyx")
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		fmt.Println("Failed to reload ProxyX:", err)
+		fmt.Println("Failed to restart ProxyX:", err)
 		fmt.Println(string(output))
 		return
 	}
 
-	fmt.Println("ProxyX reloaded successfully")
+	fmt.Println("ProxyX restarted successfully")
 }
 
 var reloadCmd = &cobra.Command{
-	Use: "reload",
+	Use: "restart",
 	Short: "Reload ProxyX configuration",
 	Run: func(cmd *cobra.Command, args []string) {
-		pidFile := "/var/run/proxyx.pid"
-		pidBytes, err := os.ReadFile(pidFile)
-		if err != nil {
-			fmt.Println("ProxyX is not runnnig")
-			return
-		}
-
-		var pid int
-		fmt.Sscanf(string(pidBytes), "%d", &pid)
-		process, _:= os.FindProcess(pid)
-		err = process.Signal(syscall.SIGHUP)
-		if err != nil {
-			fmt.Println("Failed to reload ProxyX:", err)
-		}
-
-		fmt.Println("Reload Signal sent to ProxyX (SIGHUP)")
+		reloadProxyX()
 	},
 }
+
