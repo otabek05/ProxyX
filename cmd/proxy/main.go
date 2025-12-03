@@ -4,17 +4,18 @@ import (
 	"ProxyX/internal/cli"
 	"ProxyX/internal/proxy"
 	"log"
+	"os"
 )
 
 
-func main() {
-	opts := cli.ParseCLI()
 
-	if handled := cli.HandleCLI(opts); handled {
+func main() {
+	if len(os.Args) > 1 {
+		cli.Execute()
 		return
 	}
-
-	config, err := proxy.LoadConfig(opts.ConfigPath)
+	
+	config, err := proxy.LoadConfig(ConfigPath)
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}

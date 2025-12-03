@@ -10,10 +10,11 @@ sudo chmod +x /usr/local/bin/proxyx
 
 # create config file 
 sudo mkdir -p /etc/proxyx
-sudo cp configs/proxy.yaml /etc/proxyx/proxy.yaml
+#sudo cp configs/proxy.yaml /etc/proxyx/proxy.yaml
+sudo cp -r web  /etc/proxyx
 
 #install service 
-sudo cp proxyx.service /etc/systemd/system/proxyx.service
+sudo cp systemd/proxyx.service /etc/systemd/system/proxyx.service
 
 #releaod and enable 
 sudo systemctl daemon-reload

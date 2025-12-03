@@ -3,10 +3,10 @@ Description=ProxyX Reverse Proxy Service
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/proxyx --config /etc/proxyx/proxy.yaml
+ExecStart=/usr/local/bin/proxyx 
+ExecReload=/bin/kill -HUP %MAINPID
 Restart=always
 User=root
-Environment=PROXY_CONFIG=/etc/proxyx/proxy.yaml
 
 [Install]
 WantedBy=multi-user.target

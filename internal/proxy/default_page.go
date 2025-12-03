@@ -7,7 +7,7 @@ import (
 )
 
 func ServerDefaultPage(w http.ResponseWriter) {
-	path := filepath.Join("web", "index.html")
+	path := filepath.Join("/etc/proxyx/web", "index.html")
 	content, err := os.ReadFile(path)
 	if err != nil {
 		http.Error(w, "Default page not found", http.StatusInternalServerError)
