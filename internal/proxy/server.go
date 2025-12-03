@@ -4,8 +4,6 @@ import (
 	"ProxyX/internal/common"
 	"log"
 	"net/http"
-
-	"golang.org/x/crypto/acme/autocert"
 )
 
 
@@ -21,27 +19,13 @@ func NewServer(config *common.ProxyConfig) *ProxyServer {
 }
 
 func (p *ProxyServer) Start()  {
-   certManager := autocert.Manager{
-	Prompt: autocert.AcceptTOS,
-	Cache: autocert.DirCache("certs"),
-	HostPolicy: autocert.HostWhitelist(
-	   p.config.ToDomainList()...
-	),
-   }
-
-   go func ()  {
-	 http.ListenAndServe(":80", certManager.HTTPHandler(nil))
-   }()
-   
-
    server := &http.Server{
-	Addr: ":443",
+	Addr: ":8000",
 	Handler: p.router,
-	TLSConfig: certManager.TLSConfig(),
    }
 
-   log.Println("🚀 HTTPS Proxy server running on :443")
-   err := server.ListenAndServeTLS("", "")
+   log.Println("🚀 HTTPS Proxy server running on :8000")
+   err := server.ListenAndServe()
    if err != nil {
 		log.Fatal(err)
    }

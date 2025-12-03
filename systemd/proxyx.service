@@ -1,0 +1,12 @@
+[Unit]
+Description=ProxyX Reverse Proxy Service
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/proxyx --config /etc/proxyx/proxy.yaml
+Restart=always
+User=root
+Environment=PROXY_CONFIG=/etc/proxyx/proxy.yaml
+
+[Install]
+WantedBy=multi-user.target

@@ -3,11 +3,11 @@ module ProxyX
 go 1.24.4
 
 require (
-	golang.org/x/crypto v0.45.0
+	github.com/spf13/cobra v1.10.1
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
-	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/text v0.31.0 // indirect
+	github.com/inconshreveable/mousetrap v1.1.0 // indirect
+	github.com/spf13/pflag v1.0.9 // indirect
 )
