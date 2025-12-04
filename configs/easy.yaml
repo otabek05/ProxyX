@@ -1,8 +1,8 @@
 servers:
-  - domain: server.example.org
+  - domain: localhost
     routes:
       - path: /**
         type: static
-        dir: easy365
+        dir: /home/otabek/easy365
         rate_limit: 10
-        rate_window: 5
+        rate_window: 2

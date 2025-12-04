@@ -17,16 +17,14 @@ func init() {
 	applyCmd.Flags().StringVarP(&applyFile, "file", "f", "", "Path to config file to add")
 }
 
-
 var applyCmd = &cobra.Command{
-	Use: "apply",
+	Use:   "apply",
 	Short: "Apply configuration file to ProxyX",
 	Run: func(cmd *cobra.Command, args []string) {
 		if applyFile == "" {
 			fmt.Println("Please provide a config file path using -f")
-			return 
+			return
 		}
-
 
 		data, err := os.ReadFile(applyFile)
 		if err != nil {
@@ -47,13 +45,19 @@ var applyCmd = &cobra.Command{
 		}
 
 		destDir := "/etc/proxyx/configs"
+		desFile := filepath.Join(destDir, filepath.Base(applyFile))
+		if err := hasRouteConflict(&cfg, desFile); err != nil {
+			fmt.Println(err.Error())
+			return
+		}
+
+		
 		err = os.MkdirAll(destDir, 0755)
 		if err != nil {
 			fmt.Println("Failed to created dir: ", err)
 			return
 		}
 
-		desFile := filepath.Join(destDir, filepath.Base(applyFile))
 		err = os.WriteFile(desFile, data, 0644)
 		if err != nil {
 			fmt.Println("Failed to write config file:", err)
@@ -95,6 +99,55 @@ func isValidFormat(config *common.ProxyConfig) error {
 				fmt.Printf("    Type: static, Dir: %s\n", route.Dir)
 			default:
 				return fmt.Errorf("server '%s' route '%s' has invalid type '%s'", srv.Domain, route.Path, route.Type)
+			}
+		}
+	}
+
+	return nil
+}
+
+func hasRouteConflict(newCfg *common.ProxyConfig, newCfgFile string ) error {
+	configDir := "/etc/proxyx/configs"
+	files, err := filepath.Glob(filepath.Join(configDir, "*.yaml"))
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		fmt.Println("File: ", file)
+		if file == newCfgFile {
+			return nil
+		}
+
+		data, err := os.ReadFile(file)
+		if err != nil {
+			return err
+		}
+
+		var existingCfg common.ProxyConfig
+		if err := yaml.Unmarshal(data, &existingCfg); err != nil {
+			return err
+		}
+
+		for _, newServer := range newCfg.Servers {
+			for _, newRoute := range newServer.Routes {
+
+				for _, oldServer := range existingCfg.Servers {
+					if oldServer.Domain != newServer.Domain {
+						continue
+					}
+
+					for _, oldRoute := range oldServer.Routes {
+						if oldRoute.Path == newRoute.Path {
+							return fmt.Errorf(
+								"conflict detected: domain='%s' path='%s' already exists in %s",
+								newServer.Domain,
+								newRoute.Path,
+								filepath.Base(file),
+							)
+						}
+					}
+				}
 			}
 		}
 	}

@@ -11,8 +11,6 @@ import (
 )
 
 func handleRequest(w http.ResponseWriter, r *http.Request, servers map[string][]routeInfo) {
-
-	log.Printf("[REQUEST] %s %s %s from %s", r.Host, r.Method, r.URL.Path, r.RemoteAddr)
 	host, _, _ := net.SplitHostPort(r.Host)
 	routes, ok := servers[host]
 	if !ok {
@@ -72,7 +70,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request, servers map[string][]
 			ServerDefaultPage(w)
 			return
 		}
-		log.Printf("[%s] %s %s -> %s", ip, r.Method, r.URL.Path, target.String())
+
 		proxy := httputil.NewSingleHostReverseProxy(target)
 		proxy.ServeHTTP(w, r)
 
@@ -82,7 +80,6 @@ func handleRequest(w http.ResponseWriter, r *http.Request, servers map[string][]
 			return
 		}
 
-		//buildPath := "./web"
 		staticDir := filepath.Join(matched.routeConfig.Dir)
 		requestedFile := filepath.Join(matched.routeConfig.Dir, r.URL.Path)
 		if info, err := os.Stat(requestedFile); err == nil && !info.IsDir() {
@@ -97,9 +94,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request, servers map[string][]
 			return
 		}
 
-		log.Println("Serving React SPA:", indexFile)
 		http.ServeFile(w, r, indexFile)
-
 	default:
 		ServerDefaultPage(w)
 	}

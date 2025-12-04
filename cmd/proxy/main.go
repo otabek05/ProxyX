@@ -10,8 +10,8 @@ import (
 )
 
 func main() {
-	requireRoot()
 	if len(os.Args) > 1 {
+		requireRoot()
 		cli.Execute()
 		return
 	}
@@ -20,6 +20,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
+
+	fmt.Println(config)
 
 	srv := proxy.NewServer(config)
 	srv.Start()

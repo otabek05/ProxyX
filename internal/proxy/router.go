@@ -38,7 +38,7 @@ func NewRouter(config *common.ProxyConfig) http.Handler {
 				}
 			}
 
-			rl := NewRateLimiter(route.RateLimit, time.Duration(route.RateWindow)*time.Second)
+			rl := NewRateLimiter(route.RateLimit, time.Duration(route.RateWindow)*time.Minute)
 
 			routes = append(routes, routeInfo{loadBalancer: lb, rateLimiter: rl, routeConfig: &route})
 		}
