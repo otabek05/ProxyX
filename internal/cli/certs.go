@@ -134,7 +134,7 @@ var certCmd = &cobra.Command{
 			}
 		}
 
-		fmt.Println("\n♻ Reloading ProxyX...")
+		fmt.Println("\nReloading ProxyX...")
 		reloadProxyX()
 	},
 }
