@@ -45,13 +45,11 @@ var statusCmd = &cobra.Command{
 			return
 		}
 
-		// Extract fields
 		pidStrOut := psFields[0]
 		cpu := psFields[1]
 		mem := psFields[2]
 		uptime := psFields[3]
 
-		// Print header + body aligned
 		fmt.Println("PID       CPU%    MEM%    Uptime")
 		fmt.Printf("%-9s %-7s %-7s %-7s\n", pidStrOut, cpu, mem, uptime)
 	},

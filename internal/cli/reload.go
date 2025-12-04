@@ -7,8 +7,8 @@ import (
 )
 
 
-func init() {
-	rootCmd.AddCommand(reloadCmd)
+func init(){
+	rootCmd.AddCommand(restartCmd)
 }
 
 func reloadProxyX() {
@@ -23,7 +23,7 @@ func reloadProxyX() {
 	fmt.Println("ProxyX restarted successfully")
 }
 
-var reloadCmd = &cobra.Command{
+var restartCmd = &cobra.Command{
 	Use: "restart",
 	Short: "Reload ProxyX configuration",
 	Run: func(cmd *cobra.Command, args []string) {

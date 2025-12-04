@@ -3,6 +3,6 @@ servers:
     routes:
       - path: /**
         type: static
-       # dir: easy365
+        dir: easy365
         rate_limit: 10
         rate_window: 5

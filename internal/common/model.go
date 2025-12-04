@@ -35,9 +35,9 @@ func (p *ProxyConfig) ToDomainList() []string {
 
 func (r *RouteConfig) ApplyDefaults() {
     if r.RateLimit == 0 {
-        r.RateLimit = 100   // ← 기본값
+        r.RateLimit = 100   
     }
     if r.RateWindow == 0 {
-        r.RateWindow = 60   // ← 기본값 (초 단위?)
+        r.RateWindow = 60  
     }
 }
