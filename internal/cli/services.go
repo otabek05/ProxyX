@@ -28,12 +28,20 @@ var servicesCmd = &cobra.Command{
 		if deleteFile != "" {
 			fullPath := filepath.Join(configDir, deleteFile)
 
+			if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+				fmt.Println("Config file does not exist:", fullPath)
+		        return
+			}else if err != nil {
+				fmt.Println("Failed to check file: ", err)
+				return
+			}
+
 			if err := os.Remove(fullPath); err != nil {
 				fmt.Println("Failed to delete file:", err)
 				return
 			}
 
-			fmt.Println("Deleted config:", fullPath)
+			fmt.Printf("Deleted config: %s\n", deleteFile)
 			return
 		}
 

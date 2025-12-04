@@ -16,8 +16,6 @@ func Execute() {
 }
 
 
-
-
 var rootCmd = &cobra.Command{
 	Use:   "proxyx",
 	Short: "ProxyX CLI too and server",
