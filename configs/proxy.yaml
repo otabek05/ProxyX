@@ -1,10 +1,11 @@
-servers:
-  - domain: localhost
-    routes:
-      - path: /api/v1/**
-        type: proxy
-        rate_limit: 10
-        rate_window: 5           
-        backends:
-          - http://localhost:8080
-          - http://localhost:8081
+domain: localhost
+cert_file: /home/unknown/certs/localhost/server.crt
+key_file:  /home/unknown/certs/localhost/server.key
+rate_limit: 10
+rate_window: 5   
+routes:
+- path: /api/v1/**
+  type: proxy       
+  backends:
+    - http://localhost:8080
+    - http://localhost:8081

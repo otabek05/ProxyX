@@ -11,11 +11,11 @@ import (
 
 type ProxyServer struct {
 	router http.Handler
-	config *common.ProxyConfig
+	config []common.ServerConfig
 	certCache  map[string]*tls.Certificate
 }
 
-func NewServer(config *common.ProxyConfig) *ProxyServer {
+func NewServer(config []common.ServerConfig) *ProxyServer {
 	p := &ProxyServer{config: config,}
 	p.router = NewRouter(config)
 	return p
@@ -53,7 +53,7 @@ func (p *ProxyServer) Start()  {
 
 func (p *ProxyServer) loadAllCertificates() error {
 	p.certCache = make(map[string]*tls.Certificate)
-	for _, srv :=  range p.config.Servers {
+	for _, srv :=  range p.config {
 		if srv.CertFile == "" || srv.KeyFile == "" {
 			continue
 		}

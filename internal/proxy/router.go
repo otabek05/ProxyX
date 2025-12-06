@@ -13,15 +13,15 @@ type routeInfo struct {
 		routeConfig   *common.RouteConfig
 	}
 
-func NewRouter(config *common.ProxyConfig) http.Handler {
+func NewRouter(config []common.ServerConfig) http.Handler {
 	servers := make(map[string][]routeInfo)
 
-	for _, server := range config.Servers {
+	for _, server := range config {
 		if server.Domain == "" {
 			panic("Domain must be specified ")
 		}
 
-
+		rl := NewRateLimiter(server.RateLimit, time.Duration(server.RateWindow)*time.Minute)
 		var routes []routeInfo
 		for _, route := range server.Routes {
 
@@ -37,8 +37,6 @@ func NewRouter(config *common.ProxyConfig) http.Handler {
 					panic(err)
 				}
 			}
-
-			rl := NewRateLimiter(route.RateLimit, time.Duration(route.RateWindow)*time.Minute)
 
 			routes = append(routes, routeInfo{loadBalancer: lb, rateLimiter: rl, routeConfig: &route})
 		}

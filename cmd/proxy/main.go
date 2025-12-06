@@ -22,7 +22,6 @@ func main() {
 	}
 
 	fmt.Println(config)
-
 	srv := proxy.NewServer(config)
 	srv.Start()
 }

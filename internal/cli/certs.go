@@ -130,25 +130,21 @@ func applyCerts(domain *string, files []string) {
 			continue
 		}
 
-		var cfg common.ProxyConfig
-		if err := yaml.Unmarshal(data, &cfg); err != nil {
+		var server common.ServerConfig
+		if err := yaml.Unmarshal(data, &server); err != nil {
 			continue
 		}
 
-		updated := false
-		for i := range cfg.Servers {
-			if cfg.Servers[i].Domain == *domain {
-				cfg.Servers[i].CertFile = certPath
-				cfg.Servers[i].KeyFile = keyPath
-				updated = true
-			}
+		if server.Domain != *domain {
+			continue
 		}
 
-		if updated {
-			out, _ := yaml.Marshal(&cfg)
-			os.WriteFile(file, out, 0644)
-			fmt.Println("TLS updated in:", filepath.Base(file))
-		}
+		server.CertFile = certPath
+		server.KeyFile = keyPath
+		out, _ := yaml.Marshal(&server)
+		os.WriteFile(file, out, 0644)
+		fmt.Println("TLS updated in:", filepath.Base(file))
+
 	}
 }
 
@@ -181,21 +177,20 @@ func printDomains(files []string, domainMap map[int]string) {
 			continue
 		}
 
-		var cfg common.ProxyConfig
-		if err := yaml.Unmarshal(data, &cfg); err != nil {
+		var server common.ServerConfig
+		if err := yaml.Unmarshal(data, &server); err != nil {
 			fmt.Println("Invalid YAML:", file, err)
 			continue
 		}
 
-		for _, srv := range cfg.Servers {
-			if _, ok := seen[srv.Domain]; ok {
-				continue
-			}
-
-			domainMap[index] = srv.Domain
-			seen[srv.Domain] = true
-			fmt.Printf("[%d] %s\n", index, srv.Domain)
-			index++
+		if _, ok := seen[server.Domain]; ok {
+			continue
 		}
+
+		domainMap[index] = server.Domain
+		seen[server.Domain] = true
+		fmt.Printf("[%d] %s\n", index, server.Domain)
+		index++
+
 	}
 }

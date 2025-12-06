@@ -65,21 +65,15 @@ var servicesCmd = &cobra.Command{
 				continue
 			}
 
-			var cfg common.ProxyConfig
-			if err := yaml.Unmarshal(data, &cfg); err != nil {
+			var server common.ServerConfig
+			if err := yaml.Unmarshal(data, &server); err != nil {
 				fmt.Println("Invalid YAML:", file)
-				continue
-			}
-
-			if len(cfg.Servers) == 0 {
-				fmt.Println("No servers defined in this file")
 				continue
 			}
 
 			fmt.Printf("%-20s %-25s %-10s %-40s\n", "DOMAIN", "PATH", "TYPE", "TARGET")
 			fmt.Println(strings.Repeat("-", 95))
 
-			for _, server := range cfg.Servers {
 				for _, route := range server.Routes {
 
 					target := ""
@@ -100,7 +94,6 @@ var servicesCmd = &cobra.Command{
 						target,
 					)
 				}
-			}
 		}
 	},
 }

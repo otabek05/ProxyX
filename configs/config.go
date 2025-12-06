@@ -10,9 +10,9 @@ import (
 )
 
 
-func LoadConfig() (*common.ProxyConfig, error) {
+func LoadConfig() ([]common.ServerConfig, error)  {
 	configDir := "/etc/proxyx/configs"
-	finalConfig := &common.ProxyConfig{}
+	var finalConfig []common.ServerConfig
 
 	files , err := filepath.Glob(filepath.Join(configDir, "*.yaml"))
 	if err != nil {
@@ -25,12 +25,12 @@ func LoadConfig() (*common.ProxyConfig, error) {
 			return  nil, err
 		}
 
-		var cfg common.ProxyConfig
+		var cfg common.ServerConfig
 		if err := yaml.Unmarshal(data, &cfg); err != nil {
 			return nil,  err
 		}
 
-		mergeConfigs(finalConfig, &cfg)
+		finalConfig = mergeConfigs(finalConfig, &cfg)
 	}
 
 
@@ -39,19 +39,20 @@ func LoadConfig() (*common.ProxyConfig, error) {
 
 
 
-func mergeConfigs(dst, src *common.ProxyConfig) {
-	for _,srcServer := range src.Servers {
-		found := false
-		for i := range dst.Servers {
-			if strings.EqualFold(dst.Servers[i].Domain, srcServer.Domain) {
-				dst.Servers[i].Routes = append(dst.Servers[i].Routes, srcServer.Routes...)
+func mergeConfigs(dst []common.ServerConfig, src *common.ServerConfig) []common.ServerConfig {
+	    found := false
+		for i := range dst {
+			if strings.EqualFold(dst[i].Domain, src.Domain) {
+				dst[i].Routes = append(dst[i].Routes, src.Routes...)
 				found = true
 				break
 			}
 		}
 
 		if !found {
-			dst.Servers = append(dst.Servers, srcServer)
+			dst = append(dst, *src)
 		}
-	}
+
+		return dst
+
 }
