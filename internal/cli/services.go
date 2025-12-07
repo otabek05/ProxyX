@@ -3,74 +3,96 @@ package cli
 import (
 	"ProxyX/internal/common"
 	"fmt"
+	"github.com/olekukonko/tablewriter"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/gookit/color"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
 
-
 func init() {
+	servicesCmd.Flags().StringP("output", "o", "", "Outpuy")
 	rootCmd.AddCommand(servicesCmd)
 }
 
 var servicesCmd = &cobra.Command{
 	Use:   "services",
-	Short: "Prints configured services by file",
-	Run: func(cmd *cobra.Command, args []string) {
+	Short: "Print configured services by file",
+	RunE: func(cmd *cobra.Command, args []string) error {
+		output, _ := cmd.Flags().GetString("output")
 		configDir := "/etc/proxyx/configs"
 		files, err := filepath.Glob(filepath.Join(configDir, "*.yaml"))
 		if err != nil {
-			fmt.Println("Failed to list configs:", err)
-			return
+			return err
 		}
-
 		if len(files) == 0 {
 			fmt.Println("No configuration files found.")
-			return
+			return nil
+		}
+
+		table := tablewriter.NewWriter(os.Stdout)
+
+		// Set headers depending on -o wide
+		if output == "wide" {
+			table.Header([]string{"FILE", "NAME", "NAMESPACE", "DOMAIN", "PATH", "TYPE", "TARGET", "RATELIMIT", "TLS"})
+		} else {
+			table.Header([]string{"DOMAIN", "PATH", "TYPE", "TARGET"})
 		}
 
 		for _, file := range files {
-			fmt.Println("\n📄 File:", filepath.Base(file))
-			fmt.Println(strings.Repeat("=", 90))
-
-			data, err := os.ReadFile(file)
-			if err != nil {
-				fmt.Println("Failed to read:", file)
-				continue
-			}
-
+			data, _ := os.ReadFile(file)
 			var server common.ServerConfig
 			if err := yaml.Unmarshal(data, &server); err != nil {
-				fmt.Println("Invalid YAML:", file)
+				color.Red.Println("Invalid YAML:", file)
 				continue
 			}
 
-			fmt.Printf("%-20s %-25s %-10s %-40s\n", "DOMAIN", "PATH", "TYPE", "TARGET")
-			fmt.Println(strings.Repeat("-", 95))
-
-				for _, route := range server.Spec.Routes {
-
-					target := ""
-					switch route.Type {
-					case common.RouteReverseProxy:
-						for _, url :=  range route.ReverseProxy.Servers {
-							target += " , " + url.URL 
+			for _, route := range server.Spec.Routes {
+				target := ""
+				switch route.Type {
+				case common.RouteReverseProxy:
+					if len(route.ReverseProxy.Servers) == 1 {
+						target = route.ReverseProxy.Servers[0].URL
+					} else {
+						var parts []string
+						for _, s := range route.ReverseProxy.Servers {
+							parts = append(parts, s.URL)
 						}
-					case common.RouteStatic:
-						target = route.Static.Root
+						target = strings.Join(parts, "\n")
 					}
+				case common.RouteStatic:
+					target = route.Static.Root
+				}
 
-					fmt.Printf(
-						"%-20s %-25s %-10s %-40s\n",
+				if output == "wide" {
+					rl := server.Spec.RateLimit
+					tls := server.Spec.TLS
+					table.Append([]string{
+						filepath.Base(file),
+						server.Metadata.Name,
+						server.Metadata.Namespace,
 						server.Spec.Domain,
 						route.Path,
-						route.Type,
+						route.Type.String(),
 						target,
-					)
+						fmt.Sprintf("%d req / %ds", rl.Requests, rl.WindowSeconds),
+						fmt.Sprintf("%s \n %s", tls.CertFile, tls.KeyFile),
+					})
+				} else {
+					table.Append([]string{
+						server.Spec.Domain,
+						route.Path,
+						route.Type.String(),
+						target,
+					})
 				}
+			}
 		}
+
+		table.Render()
+		return nil
 	},
 }
