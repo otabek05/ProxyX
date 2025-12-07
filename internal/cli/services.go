@@ -13,7 +13,6 @@ import (
 
 
 func init() {
-	servicesCmd.Flags().StringP("delete", "d", "", "Delete a config file")
 	rootCmd.AddCommand(servicesCmd)
 }
 
@@ -21,29 +20,7 @@ var servicesCmd = &cobra.Command{
 	Use:   "services",
 	Short: "Prints configured services by file",
 	Run: func(cmd *cobra.Command, args []string) {
-
-		deleteFile, _ := cmd.Flags().GetString("delete")
 		configDir := "/etc/proxyx/configs"
-		if deleteFile != "" {
-			fullPath := filepath.Join(configDir, deleteFile)
-
-			if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-				fmt.Println("Config file does not exist:", deleteFile)
-		        return
-			}else if err != nil {
-				fmt.Println("Failed to check file: ", err)
-				return
-			}
-
-			if err := os.Remove(fullPath); err != nil {
-				fmt.Println("Failed to delete file:", err)
-				return
-			}
-
-			fmt.Printf("Deleted config: %s\n", deleteFile)
-			return
-		}
-
 		files, err := filepath.Glob(filepath.Join(configDir, "*.yaml"))
 		if err != nil {
 			fmt.Println("Failed to list configs:", err)
@@ -78,14 +55,12 @@ var servicesCmd = &cobra.Command{
 
 					target := ""
 					switch route.Type {
-					case "proxy":
+					case common.RouteReverseProxy:
 						for _, url :=  range route.ReverseProxy.Servers {
 							target += " , " + url.URL 
 						}
-					case "static":
+					case common.RouteStatic:
 						target = route.Static.Root
-					default:
-						target = "unknown"
 					}
 
 					fmt.Printf(
