@@ -13,7 +13,7 @@ spec:
     keyFile:  /home/unknown/certs/localhost/server.key
 
   rateLimit:
-    requests: 10
+    requests: 1000
     windowSeconds: 5
 
   routes:
@@ -30,4 +30,4 @@ spec:
       reverseProxy:
         servers:
           - url: http://localhost:8080
-          - url: http://localhost:8081
+          #- url: http://localhost:8081

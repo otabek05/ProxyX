@@ -1,9 +1,0 @@
-domain: localhost
-cert_file: /home/otabek/localhost-cert/localhost.crt
-key_file:  /home/otabek/localhost-cert/localhost.key
-rate_limit: 10
-rate_window: 5
-routes:
-  - path: /**
-    type: static
-    dir: /home/otabek/easy365

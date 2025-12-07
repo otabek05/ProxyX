@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"ProxyX/internal/common"
 	"log"
 	"net"
 	"net/http"
@@ -65,7 +66,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request, servers map[string][]
 	}
 
 	switch matched.routeConfig.Type {
-	case "proxy":
+	case common.RouteReverseProxy:
 		target := matched.loadBalancer.Next()
 		if target == nil {
 			ServerDefaultPage(w)
@@ -75,7 +76,7 @@ func handleRequest(w http.ResponseWriter, r *http.Request, servers map[string][]
 		proxy := httputil.NewSingleHostReverseProxy(target)
 		proxy.ServeHTTP(w, r)
 
-	case "static":
+	case common.RouteStatic:
 		if matched.routeConfig.Static == nil || matched.routeConfig.Static.Root == "" {
 			ServerDefaultPage(w)
 			return

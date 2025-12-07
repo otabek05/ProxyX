@@ -26,11 +26,11 @@ func NewRouter(config []common.ServerConfig) http.Handler {
 		for _, route := range server.Spec.Routes {
 
 		    if route.Type == "" {
-				route.Type = "proxy"
+				route.Type = common.RouteReverseProxy
 			}
 
 			var lb *LoadBalancer
-			if route.Type == "proxy" {
+			if route.Type == common.RouteReverseProxy{
 				var err error
 				lb, err = NewLoadBalancer(route.ReverseProxy.Servers)
 				if err != nil {
