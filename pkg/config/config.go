@@ -1,4 +1,4 @@
-package configs
+package config
 
 import (
 	"ProxyX/internal/common"
@@ -8,6 +8,8 @@ import (
 
 	"gopkg.in/yaml.v2"
 )
+
+
 
 
 func LoadConfig() ([]common.ServerConfig, error)  {

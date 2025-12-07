@@ -1,9 +1,9 @@
 package main
 
 import (
-	"ProxyX/configs"
 	"ProxyX/internal/cli"
 	"ProxyX/internal/proxy"
+	"ProxyX/pkg/config"
 	"fmt"
 	"log"
 	"os"
@@ -16,7 +16,7 @@ func main() {
 		return
 	}
 	
-	config, err := configs.LoadConfig()
+	config, err := config.LoadConfig()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
