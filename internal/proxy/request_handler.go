@@ -76,13 +76,13 @@ func handleRequest(w http.ResponseWriter, r *http.Request, servers map[string][]
 		proxy.ServeHTTP(w, r)
 
 	case "static":
-		if matched.routeConfig.Dir == "" {
+		if matched.routeConfig.Static == nil || matched.routeConfig.Static.Root == "" {
 			ServerDefaultPage(w)
 			return
 		}
-
-		staticDir := filepath.Join(matched.routeConfig.Dir)
-		requestedFile := filepath.Join(matched.routeConfig.Dir, r.URL.Path)
+		
+		staticDir := filepath.Join(matched.routeConfig.Static.Root)
+		requestedFile := filepath.Join(staticDir, r.URL.Path)
 		if info, err := os.Stat(requestedFile); err == nil && !info.IsDir() {
 			http.ServeFile(w, r, requestedFile)
 			return

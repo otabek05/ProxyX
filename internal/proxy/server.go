@@ -29,8 +29,13 @@ func (p *ProxyServer) Start()  {
 	go func ()  {
 	   log.Println("HTTP Proxy server running on :80")
 	  http.ListenAndServe(":80", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			target := "https://" + r.Host + r.URL.String()
-			http.Redirect(w, r, target, http.StatusMovedPermanently)
+		    if _, ok := p.certCache[r.Host]; ok {
+				target := "https://" + r.Host + r.URL.String()
+			    http.Redirect(w, r, target, http.StatusMovedPermanently)
+				return
+			}
+
+			p.router.ServeHTTP(w,r)
 		}))	
 	}()
 
@@ -54,17 +59,17 @@ func (p *ProxyServer) Start()  {
 func (p *ProxyServer) loadAllCertificates() error {
 	p.certCache = make(map[string]*tls.Certificate)
 	for _, srv :=  range p.config {
-		if srv.CertFile == "" || srv.KeyFile == "" {
+		if srv.Spec.TLS == nil{
 			continue
 		}
 
-		cert , err := tls.LoadX509KeyPair(srv.CertFile, srv.KeyFile)
+		cert , err := tls.LoadX509KeyPair(srv.Spec.TLS.CertFile, srv.Spec.TLS.KeyFile)
 		if err != nil {
-			return fmt.Errorf("TLS load failed for %s: %v", srv.Domain, err)
+			return fmt.Errorf("TLS load failed for %s: %v", srv.Spec.Domain, err)
 		}
 
-		p.certCache[srv.Domain] = &cert
-		log.Println("Loaded TLS for:", srv.Domain)
+		p.certCache[srv.Spec.Domain] = &cert
+		log.Println("Loaded TLS for:", srv.Spec.Domain)
 	}
 
 	return nil

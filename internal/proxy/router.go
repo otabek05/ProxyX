@@ -17,13 +17,13 @@ func NewRouter(config []common.ServerConfig) http.Handler {
 	servers := make(map[string][]routeInfo)
 
 	for _, server := range config {
-		if server.Domain == "" {
+		if server.Spec.Domain == "" {
 			panic("Domain must be specified ")
 		}
 
-		rl := NewRateLimiter(server.RateLimit, time.Duration(server.RateWindow)*time.Minute)
+		rl := NewRateLimiter(server.Spec.RateLimit.Requests, time.Duration(server.Spec.RateLimit.WindowSeconds)*time.Minute)
 		var routes []routeInfo
-		for _, route := range server.Routes {
+		for _, route := range server.Spec.Routes {
 
 		    if route.Type == "" {
 				route.Type = "proxy"
@@ -32,7 +32,7 @@ func NewRouter(config []common.ServerConfig) http.Handler {
 			var lb *LoadBalancer
 			if route.Type == "proxy" {
 				var err error
-				lb, err = NewLoadBalancer(route.Backends)
+				lb, err = NewLoadBalancer(route.ReverseProxy.Servers)
 				if err != nil {
 					panic(err)
 				}
@@ -45,7 +45,7 @@ func NewRouter(config []common.ServerConfig) http.Handler {
 			return len(routes[i].routeConfig.Path) > len(routes[j].routeConfig.Path)
 		})
 		
-		servers[server.Domain] = routes
+		servers[server.Spec.Domain] = routes
 	}
 
 	return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request)  {

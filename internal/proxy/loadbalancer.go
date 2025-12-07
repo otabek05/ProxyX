@@ -1,6 +1,7 @@
 package proxy
 
 import (
+	"ProxyX/internal/common"
 	"net/url"
 	"sync"
 )
@@ -12,11 +13,11 @@ type LoadBalancer struct {
 	mutex sync.Mutex
 }
 
-func NewLoadBalancer(backendUrls []string) (*LoadBalancer, error) {
+func NewLoadBalancer(backendUrls []common.ProxyServer) (*LoadBalancer, error) {
 	var backends []*url.URL
 
 	for _, addr := range backendUrls {
-		u, err := url.Parse(addr)
+		u, err := url.Parse(addr.URL)
 		if err != nil {
 			return nil, err 
 		}

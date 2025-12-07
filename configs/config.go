@@ -42,8 +42,8 @@ func LoadConfig() ([]common.ServerConfig, error)  {
 func mergeConfigs(dst []common.ServerConfig, src *common.ServerConfig) []common.ServerConfig {
 	    found := false
 		for i := range dst {
-			if strings.EqualFold(dst[i].Domain, src.Domain) {
-				dst[i].Routes = append(dst[i].Routes, src.Routes...)
+			if strings.EqualFold(dst[i].Spec.Domain, src.Spec.Domain) {
+				dst[i].Spec.Routes = append(dst[i].Spec.Routes, src.Spec.Routes...)
 				found = true
 				break
 			}

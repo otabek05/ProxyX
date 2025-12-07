@@ -135,12 +135,12 @@ func applyCerts(domain *string, files []string) {
 			continue
 		}
 
-		if server.Domain != *domain {
+		if server.Spec.Domain != *domain {
 			continue
 		}
 
-		server.CertFile = certPath
-		server.KeyFile = keyPath
+		server.Spec.TLS.CertFile = certPath
+		server.Spec.TLS.KeyFile = keyPath
 		out, _ := yaml.Marshal(&server)
 		os.WriteFile(file, out, 0644)
 		fmt.Println("TLS updated in:", filepath.Base(file))
@@ -183,14 +183,13 @@ func printDomains(files []string, domainMap map[int]string) {
 			continue
 		}
 
-		if _, ok := seen[server.Domain]; ok {
+		if _, ok := seen[server.Spec.Domain]; ok {
 			continue
 		}
 
-		domainMap[index] = server.Domain
-		seen[server.Domain] = true
-		fmt.Printf("[%d] %s\n", index, server.Domain)
+		domainMap[index] = server.Spec.Domain
+		seen[server.Spec.Domain] = true
+		fmt.Printf("[%d] %s\n", index, server.Spec.Domain)
 		index++
-
 	}
 }

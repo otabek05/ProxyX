@@ -1,48 +1,60 @@
 package common
 
 
+type ServerConfig struct {
+	ApiVersion string    `yaml:"apiVersion"`
+	Kind       string    `yaml:"kind"`
+	Metadata   Metadata  `yaml:"metadata"`
+	Spec       ProxySpec `yaml:"spec"`
+}
+
+type Metadata struct {
+	Name      string `yaml:"name"`
+	Namespace string `yaml:"namespace"`
+}
+
+type ProxySpec struct {
+	Domain    string          `yaml:"domain"`
+	TLS       *TLSConfig      `yaml:"tls"`
+	RateLimit *RateLimitConfig `yaml:"rateLimit"`
+	Routes    []RouteConfig `yaml:"routes"`
+}
+
+type TLSConfig struct {
+	CertFile string `yaml:"certFile"`
+	KeyFile  string `yaml:"keyFile"`
+}
+
+type RateLimitConfig struct {
+	Requests      int `yaml:"requests"`
+	WindowSeconds int `yaml:"windowSeconds"`
+}
+
 type RouteConfig struct {
-	Path  string `yaml:"path"`
-	Type  string `yaml:"type,omitempty"`
-	Dir   string  `yaml:"dir,omitempty"`
-	Backends   []string `yaml:"backends"`
+	Name         string            `yaml:"name"`
+	Path         string            `yaml:"path"`
+	Type         RouteType            `yaml:"type,omitempty"`
+	Static       *StaticConfig     `yaml:"static,omitempty"`
+	ReverseProxy *ReverseProxySpec `yaml:"reverseProxy"`
 }
 
-type ServerConfig  struct {
-	Domain  string `yaml:"domain"`
-	CertFile string `yaml:"cert_file,omitempty"`
-	KeyFile string `yaml:"key_file,omitempty"`
-	RateLimit int `yaml:"rate_limit,omitempty"`
-	RateWindow int `yaml:"rate_window,omitempty"`
-	Routes  []RouteConfig `yaml:"routes"`
+type StaticConfig struct {
+	Root string `yaml:"root"`
 }
 
-
-/*
-type ProxyConfig struct {
-	Servers  []ServerConfig `yaml:"servers"`
+type ReverseProxySpec struct {
+	Servers []ProxyServer `yaml:"servers"`
 }
 
-*/
+type ProxyServer struct {
+	URL string `yaml:"url"`
+}
 
-
-func  ToDomainList(p []ServerConfig) []string {
+func ToDomainList(p []ServerConfig) []string {
 	var domains []string
-	for _, server := range p{
-		domains = append(domains, server.Domain)
+	for _, server := range p {
+		domains = append(domains, server.Spec.Domain)
 	}
 
 	return domains
 }
-
-
-/*
-func (r *RouteConfig) ApplyDefaults() {
-    if r.RateLimit == 0 {
-        r.RateLimit = 100   
-    }
-    if r.RateWindow == 0 {
-        r.RateWindow = 60  
-    }
-}
-	*/

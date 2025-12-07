@@ -1,8 +1,20 @@
-servers:
-  - domain: localhost
-    routes:
-      - path: /**
-        type: static
-        dir: ./web/easy365
-        rate_limit: 10
-        rate_window: 5
+domain: localhost
+
+ssl:
+  certificate: /home/unknown/certs/localhost/server.crt
+  private_key: /home/unknown/certs/localhost/server.key
+
+rate_limit:
+  requests: 1000
+  window_seconds: 2
+
+routes:
+  - path: /**
+    type: static
+    root: /home/otabek/easy365
+  
+  - path: /api/v1/**
+    type: reverse_proxy
+    servers:
+       - url: http://localhost:8080
+       - url: http://localhost:8081

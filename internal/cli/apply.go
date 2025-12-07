@@ -57,6 +57,13 @@ var applyCmd = &cobra.Command{
 			return
 		}
 
+		if server.Spec.RateLimit == nil {
+			server.Spec.RateLimit = &common.RateLimitConfig{
+				Requests: 1200,
+				WindowSeconds: 1,
+			}
+		}
+
 		err = os.WriteFile(desFile, data, 0644)
 		if err != nil {
 			fmt.Println("Failed to write config file:", err)
@@ -69,28 +76,32 @@ var applyCmd = &cobra.Command{
 }
 
 func isValidFormat(srv *common.ServerConfig) error {
-	if srv.Domain == "" {
+	if srv.Spec.Domain == "" {
 		return fmt.Errorf("server missing domain")
 	}
 
-	for _, route := range srv.Routes {
+	for _, route := range srv.Spec.Routes {
 		if route.Path == "" {
-			return fmt.Errorf("server '%s' has route missing path", srv.Domain)
+			return fmt.Errorf("server '%s' has route missing path", srv.Spec.Domain)
+		}
+
+		if !route.Type.IsValid() {
+			return  fmt.Errorf("server: '%s' has invalid type", srv.Spec.Domain)
 		}
 
 		switch route.Type {
-		case "proxy":
-			if len(route.Backends) == 0 {
-				return fmt.Errorf("server '%s' route '%s' of type 'proxy' has no backends", srv.Domain, route.Path)
+		case common.RouteReverseProxy:
+			if len(route.ReverseProxy.Servers) == 0 {
+				return fmt.Errorf("server '%s' route '%s' of type 'proxy' has no backends", srv.Spec.Domain, route.Path)
 			}
 
-		case "static":
-			if route.Dir == "" {
-				return fmt.Errorf("server '%s' route '%s' of type 'static' missing dir", srv.Domain, route.Path)
+		case common.RouteStatic:
+			if route.Static == nil || route.Static.Root == "" {
+				return fmt.Errorf("server '%s' route '%s' of type 'static' missing dir", srv.Spec.Domain, route.Path)
 			}
 
 		default:
-			return fmt.Errorf("server '%s' route '%s' has invalid type '%s'", srv.Domain, route.Path, route.Type)
+			return fmt.Errorf("server '%s' route '%s' has invalid type '%s'", srv.Spec.Domain, route.Path, route.Type)
 		}
 	}
 
@@ -119,17 +130,17 @@ func hasRouteConflict(newCfg *common.ServerConfig, newCfgFile string) error {
 			return err
 		}
 
-		for _, newRoute := range newCfg.Routes {
+		for _, newRoute := range newCfg.Spec.Routes {
 
-			if existingCfg.Domain != newCfg.Domain {
+			if existingCfg.Spec.Domain != newCfg.Spec.Domain {
 				continue
 			}
 
-			for _, oldRoute := range existingCfg.Routes {
+			for _, oldRoute := range existingCfg.Spec.Routes {
 				if oldRoute.Path == newRoute.Path {
 					return fmt.Errorf(
 						"conflict detected: domain='%s' path='%s' already exists in %s",
-						newCfg.Domain,
+						newCfg.Spec.Domain,
 						newRoute.Path,
 						filepath.Base(file),
 					)

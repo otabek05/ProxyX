@@ -74,21 +74,23 @@ var servicesCmd = &cobra.Command{
 			fmt.Printf("%-20s %-25s %-10s %-40s\n", "DOMAIN", "PATH", "TYPE", "TARGET")
 			fmt.Println(strings.Repeat("-", 95))
 
-				for _, route := range server.Routes {
+				for _, route := range server.Spec.Routes {
 
 					target := ""
 					switch route.Type {
 					case "proxy":
-						target = strings.Join(route.Backends, ", ")
+						for _, url :=  range route.ReverseProxy.Servers {
+							target += " , " + url.URL 
+						}
 					case "static":
-						target = route.Dir
+						target = route.Static.Root
 					default:
 						target = "unknown"
 					}
 
 					fmt.Printf(
 						"%-20s %-25s %-10s %-40s\n",
-						server.Domain,
+						server.Spec.Domain,
 						route.Path,
 						route.Type,
 						target,

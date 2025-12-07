@@ -1,0 +1,33 @@
+apiVersion: proxyx.io/v1
+kind: ProxyConfig
+
+metadata:
+  name: local-proxy
+  namespace: default
+
+spec:
+  domain: localhost
+
+  tls:
+    certFile: /home/unknown/certs/localhost/server.crt
+    keyFile:  /home/unknown/certs/localhost/server.key
+
+  rateLimit:
+    requests: 10
+    windowSeconds: 5
+
+  routes:
+  
+    - name: static-files
+      path: /**
+      type: Static
+      static:
+        root: /home/otabek/easy365
+
+    - name: api-route
+      path: /api/v1/**
+      type: ReverseProxy
+      reverseProxy:
+        servers:
+          - url: http://localhost:8080
+          - url: http://localhost:8081
