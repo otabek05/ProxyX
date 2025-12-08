@@ -13,37 +13,37 @@ ProxyX is a high‑performance, configuration‑driven reverse proxy and static 
 
 ---
 
-## 🚀 Features Overview
+## Features Overview
 
-### 🔁 Reverse Proxy
+### Reverse Proxy
 
 Route traffic to one or more backend servers with automatic load balancing and health checks.
 
-### 📦 Static File Hosting
+### Static File Hosting
 
 Serve static files directly from any directory on your system.
 
-### 🔐 TLS / HTTPS (Certbot)
+### TLS / HTTPS (Certbot)
 
 Automatically secure domains using Let's Encrypt via **Certbot**.
 
-### ⚖️ Load Balancing
+### Load Balancing
 
 * **Round‑Robin** distribution
 * **Health Checking** for backend servers
 * Automatic failover
 
-### 🚦 Per‑Domain Rate Limiting
+### Per‑Domain Rate Limiting
 
 Each domain has its **own independent rate limit**.
 
-### 🧾 YAML Configuration
+### YAML Configuration
 
 Kubernetes‑style declarative configuration format.
 
 ---
 
-## 🗂️ Example ProxyX Configuration
+## Example ProxyX Configuration
 
 ```yaml
 apiVersion: proxyx.io/v1
@@ -82,7 +82,7 @@ spec:
 
 ---
 
-## 🧩 Route Types
+## Route Types
 
 ### ✅ Static Route
 
@@ -113,7 +113,7 @@ reverseProxy:
 
 ---
 
-## ⚖️ Load Balancer
+## Load Balancer
 
 ### ✅ Round‑Robin
 
@@ -142,7 +142,7 @@ rateLimit:
 
 ---
 
-## 🔐 TLS & HTTPS with Certbot
+## TLS & HTTPS with Certbot
 
 ProxyX integrates with **Certbot** to automatically issue and manage Let's Encrypt TLS certificates.
 
@@ -176,7 +176,7 @@ Then ProxyX will:
 
 ---
 
-## 🖥️ CLI Tool
+## CLI Tool
 
 ProxyX includes a full lifecycle management CLI.
 
@@ -208,7 +208,7 @@ sudo proxyx status
 
 ---
 
-## 📊 Wide Configuration View Example
+## Wide Configuration View Example
 
 ```bash
 sudo proxyx configs -o wide
@@ -228,7 +228,7 @@ sudo proxyx configs -o wide
 
 ---
 
-## 🧠 System Service & Ports
+## System Service & Ports
 
 ProxyX automatically installs itself as a **Linux system service (`proxyx.service`)** and is designed to run as a **production-grade daemon**.
 
@@ -248,7 +248,7 @@ ProxyX automatically installs itself as a **Linux system service (`proxyx.servic
 
 ---
 
-## 🛠️ Architecture Overview
+## Architecture Overview
 
 * Go `net/http` server
 * Custom YAML parser
@@ -264,7 +264,7 @@ ProxyX automatically installs itself as a **Linux system service (`proxyx.servic
 
 ---
 
-## 🧪 Use Cases
+## Use Cases
 
 * API Gateway
 * Static website hosting
@@ -272,13 +272,40 @@ ProxyX automatically installs itself as a **Linux system service (`proxyx.servic
 * Development reverse proxy
 * Production HTTPS entrypoint
 
+
 ---
 
-## 🗑️ Uninstallation
+✅ ProxyX is now fully removed from your system.
+
+---
+
+## Installation
+
+```bash
+git clone https://github.com/yourname/proxyx.git
+cd proxyx
+sudo make install
+sudo proxyx status 
+```
+
+---
+
+## Security Features
+
+* HTTPS with Let's Encrypt
+* Per‑domain rate limiting
+* Backend health validation
+* Mandatory TLS for production
+
+---
+
+---
+
+## Uninstallation
 
 To completely remove ProxyX from your system:
 
-### Remove mannually
+### Mannual Remove
 
 ```bash
 sudo systemctl stop proxyx
@@ -291,7 +318,7 @@ sudo systemctl daemon-reload
 
 ---
 
-### Remove with Makefile
+### Automatic Remove
 
 ```bash
 cd ~/proxyx 
@@ -302,31 +329,7 @@ sudo rm -rf ~/proxyx
 
 ---
 
-✅ ProxyX is now fully removed from your system.
-
----
-
-## 📦 Installation
-
-```bash
-git clone https://github.com/yourname/proxyx.git
-cd proxyx
-sudo make install
-sudo proxyx status 
-```
-
----
-
-## 🔒 Security Features
-
-* HTTPS with Let's Encrypt
-* Per‑domain rate limiting
-* Backend health validation
-* Mandatory TLS for production
-
----
-
-## 🗺️ Roadmap
+##  Roadmap
 
 * ✅ Web dashboard
 * ✅ Per‑route rate limits
@@ -335,7 +338,7 @@ sudo proxyx status
 
 ---
 
-## 🧑‍💻 Author
+## Author
 
 Developed by **Otabek** — Go Backend Developer
 
