@@ -1,260 +1,346 @@
 # ProxyX
 
-ProxyX is a lightweight and flexible **reverse proxy** written in **Golang**, designed for clean, structured YAML-based configuration.  
-It includes a powerful CLI tool for managing configs, validating formats, and controlling the ProxyX systemd service.
+ProxyX is a high‑performance, configuration‑driven reverse proxy and static file server written in **Go**, inspired by **Nginx**. It provides:
 
-Future improvements include **automatic TLS via Let’s Encrypt** and a **web-based dashboard**.
+* ✅ Reverse Proxy
+* ✅ Static File Serving
+* ✅ TLS/HTTPS with Certbot
+* ✅ Load Balancing (Round‑Robin)
+* ✅ Health Checking
+* ✅ **Per‑Domain Rate Limiting**
+* ✅ Declarative YAML Configuration
+* ✅ Powerful Interactive CLI Tool
 
 ---
 
-## ✨ Features
+## 🚀 Features Overview
 
-- Simple YAML-based configuration
-- Reverse proxy with load balancing
-- Static file serving
-- CLI tool (`proxyx`)
-- Systemd service integration
-- Strict configuration validation
-- Auto cleanup (removes YAML comments)
-- **Coming Soon:**  
-  - Let's Encrypt TLS automation  
-  - Web management UI  
-  - Hot reload without restart  
+### 🔁 Reverse Proxy
+
+Route traffic to one or more backend servers with automatic load balancing and health checks.
+
+### 📦 Static File Hosting
+
+Serve static files directly from any directory on your system.
+
+### 🔐 TLS / HTTPS (Certbot)
+
+Automatically secure domains using Let's Encrypt via **Certbot**.
+
+### ⚖️ Load Balancing
+
+* **Round‑Robin** distribution
+* **Health Checking** for backend servers
+* Automatic failover
+
+### 🚦 Per‑Domain Rate Limiting
+
+Each domain has its **own independent rate limit**.
+
+### 🧾 YAML Configuration
+
+Kubernetes‑style declarative configuration format.
+
+---
+
+## 🗂️ Example ProxyX Configuration
+
+```yaml
+apiVersion: proxyx.io/v1
+kind: ProxyConfig
+
+metadata:
+  name: local-proxy
+  namespace: default
+
+spec:
+  domain: localhost
+
+  tls:
+    certFile: /home/unknown/certs/localhost/server.crt
+    keyFile:  /home/unknown/certs/localhost/server.key
+
+  rateLimit:
+    requests: 1000
+    windowSeconds: 5
+
+  routes:
+    - name: static-files
+      path: /**
+      type: Static
+      static:
+        root: /home/otabek/easy365
+
+    - name: api-route
+      path: /api/v1/**
+      type: ReverseProxy
+      reverseProxy:
+        servers:
+          - url: http://localhost:8080
+          - url: http://localhost:8081
+```
+
+---
+
+## 🧩 Route Types
+
+### ✅ Static Route
+
+```yaml
+type: Static
+static:
+  root: /var/www/app
+```
+
+* Direct disk file serving
+* Supports recursive path matching using `/**`
+
+---
+
+### ✅ Reverse Proxy Route
+
+```yaml
+type: ReverseProxy
+reverseProxy:
+  servers:
+    - url: http://localhost:8080
+    - url: http://localhost:8081
+```
+
+* Multiple backends supported
+* Round‑Robin load balancing
+* Automatic health‑based failover
+
+---
+
+## ⚖️ Load Balancer
+
+### ✅ Round‑Robin
+
+Distributes requests evenly across all **healthy** backends.
+
+### ✅ Health Checker
+
+* Removes offline servers automatically
+* Periodic TCP/HTTP availability probing
+
+---
+
+## 🚦 Per‑Domain Rate Limiter
+
+Each domain controls its **own request limits**:
+
+```yaml
+rateLimit:
+  requests: 1000
+  windowSeconds: 5
+```
+
+✅ Protects domains independently
+✅ Prevents cross‑domain poisoning
+✅ Applied across **all routes under the domain**
+
+---
+
+## 🔐 TLS & HTTPS with Certbot
+
+ProxyX integrates with **Certbot** to automatically issue and manage Let's Encrypt TLS certificates.
+
+### ✅ Requirements
+
+You **must install Certbot manually**:
+
+```bash
+sudo dnf install certbot   # RHEL / Amazon Linux
+sudo apt install certbot   # Ubuntu / Debian
+```
+
+---
+
+### ✅ Interactive Certificate Issuance
+
+```bash
+sudo proxyx certs
+```
+
+ProxyX will **prompt interactively**:
+
+* ✅ Domain name
+* ✅ Email address for Let's Encrypt
+
+Then ProxyX will:
+
+* Request the certificate
+* Store the cert & key
+* Automatically wire it into your configuration
+
+---
+
+## 🖥️ CLI Tool
+
+ProxyX includes a full lifecycle management CLI.
+
+### ✅ Available Commands
+
+| Command           | Description                              |
+| ----------------- | ---------------------------------------- |
+| `apply`           | Apply configuration file                 |
+| `certs`           | **Interactive TLS issuance via Certbot** |
+| `configs`         | Show active configurations               |
+| `configs -o wide` | Show full detailed configuration         |
+| `delete`          | Delete applied configuration             |
+| `restart`         | Reload ProxyX configuration              |
+| `status`          | Check if ProxyX is running               |
+| `stop`            | Stop ProxyX service                      |
+| `version`         | Show ProxyX version                      |
+
+---
+
+### ✅ Basic CLI Usage
+
+```bash
+sudo proxyx apply -f path/to/file
+sudo proxyx configs
+sudo proxyx configs -o wide
+sudo proxyx restart
+sudo proxyx status
+```
+
+---
+
+## 📊 Wide Configuration View Example
+
+```bash
+sudo proxyx configs -o wide
+```
+
+```
+┌──────────────┬─────────────┬───────────┬───────────┬────────────┬──────────────┬───────────────────────┬───────────────┬─────────────────────────┐
+│     FILE     │    NAME     │ NAMESPACE │  DOMAIN   │    PATH    │     TYPE     │        TARGET         │   RATELIMIT   │            TLS          │
+├──────────────┼─────────────┼───────────┼───────────┼────────────┼──────────────┼───────────────────────┼───────────────┼─────────────────────────|
+│ example.yaml │ local-proxy │ default   │ localhost │ /**        │ Static       │     path/to/file/     │ 1000 req /5s  │ path/to/cert/server.crt │
+│              │             │           │           │            │              │                       │               │ path/to/cert/server.key │
+│              │             │           │           ├────────────┼──────────────┼───────────────────────┼───────────────┼─────────────────────────┤
+│              │             │           │           │ /api/v1/** │ ReverseProxy │ http://localhost:8080 │ 1000 req / 5s │ path/to/cert/server.crt │
+│              │             │           │           │            │              │ http://localhost:8081 │               │ path/to/cert/server.key │
+└──────────────┴─────────────┴───────────┴───────────┴────────────┴──────────────┴───────────────────────┴───────────────┴─────────────────────────┘
+```
+
+---
+
+## 🧠 System Service & Ports
+
+ProxyX automatically installs itself as a **Linux system service (`proxyx.service`)** and is designed to run as a **production-grade daemon**.
+
+### ✅ Service Features
+
+* ✅ Runs as `proxyx` system service
+* ✅ Automatically starts on system boot
+* ✅ Automatically restarts if the server turns off/on
+* ✅ Automatically restarts on crash or failure
+
+### ✅ Network Ports
+
+* ✅ **Port 80** → HTTP traffic
+* ✅ **Port 443** → HTTPS (TLS via Certbot)
+
+> ⚠️ ProxyX requires **root (sudo)** access to bind to ports **80 and 443**.
+
+---
+
+## 🛠️ Architecture Overview
+
+* Go `net/http` server
+* Custom YAML parser
+* Reverse proxy engine
+* Health checker
+* Certbot shell integration
+* Middleware pipeline:
+
+  * Request Logger
+  * Per‑Domain Rate Limiter
+  * Load Balancer
+  * Health Checker
+
+---
+
+## 🧪 Use Cases
+
+* API Gateway
+* Static website hosting
+* Internal microservice router
+* Development reverse proxy
+* Production HTTPS entrypoint
+
+---
+
+## 🗑️ Uninstallation
+
+To completely remove ProxyX from your system:
+
+### Remove mannually
+
+```bash
+sudo systemctl stop proxyx
+sudo systemctl disable proxyx 
+sudo rm -f /etc/systemd/system/proxyx.service
+sudo rm -f /usr/local/bin/proxyx
+sudo rm -rf /etc/proxyx
+sudo systemctl daemon-reload
+```
+
+---
+
+### Remove with Makefile
+
+```bash
+cd ~/proxyx 
+sudo make uninstall
+cd ..
+sudo rm -rf ~/proxyx
+```
+
+---
+
+✅ ProxyX is now fully removed from your system.
 
 ---
 
 ## 📦 Installation
 
 ```bash
-git clone https://github.com/otabek05/proxyx.git
+git clone https://github.com/yourname/proxyx.git
 cd proxyx
-make install
-```
-
-# ProxyX CLI Usage
-
-## 📘 CLI Usage
-
-ProxyX provides a command-line interface for managing the proxy service, validating configuration files, and checking system status.
-
-### **Basic Format**
-```bash
-proxyx <command> [options]
+sudo make install
+sudo proxyx status 
 ```
 
 ---
 
-## 🔧 Commands
+## 🔒 Security Features
 
-### **Start ProxyX**
-```bash
-proxyx version
-```
-
----
-
-### **Stop ProxyX service**
-```bash
-proxyx stop
-```
-Stops the systemd service: `proxyx.service`.
+* HTTPS with Let's Encrypt
+* Per‑domain rate limiting
+* Backend health validation
+* Mandatory TLS for production
 
 ---
 
-### **Restart ProxyX service**
-```bash
-proxyx restart
-```
-Restarts the service cleanly.
+## 🗺️ Roadmap
+
+* ✅ Web dashboard
+* ✅ Per‑route rate limits
+* ✅ WebSocket proxying
+* ✅ TCP proxy support
 
 ---
 
-### **Check ProxyX status**
-```bash
-proxyx status
-```
-Shows whether ProxyX is running and displays real-time process information:
+## 🧑‍💻 Author
 
-Example output:
-```
-ProxyX is running (systemd service)
-PID       CPU%    MEM%    Uptime
-3993856   0.3     1.1     01:22:55
-```
-
-### Apply a configuration file
-
-```
-proxyx apply -f /path/to/config.yaml
-
-```
-Applies the configuration file to ProxyX and validates it before saving to /etc/proxyx/configs/.
-Reloads the running ProxyX service if active.
-
+Developed by **Otabek** — Go Backend Developer
 
 ---
 
+## 📄 License
 
-# ProxyX YAML Configuration Guide
-
-This document explains the full YAML configuration format used by **ProxyX**.
-
----
-
-## Top-Level Structure
-
-A ProxyX configuration file must contain a list of servers:
-
-```yaml
-servers:
-  - domain: example.com
-    routes:
-      - path: /
-        type: proxy
-        backends:
-          - http://localhost:8080
-```
-
----
-
-## Server Structure
-
-Each server block maps an incoming domain to one or more route definitions:
-
-```yaml
-servers:
-  - domain: yourdomain.com
-    routes:
-      - path: /api
-        type: proxy
-        backends:
-          - http://localhost:9000
-      - path: /static
-        type: static
-        dir: /var/www/html
-```
-
-
-### **Fields**
-
-| Field  | Required | Type | Description |
-|--------|----------|------|-------------|
-| `domain` | Yes | string | The hostname that this rule applies to. |
-| `routes` | Yes | list | A list of routing rules. |
-
-
----
-
-## Route Structure
-
-Each route defines how ProxyX handles requests.
-
-### **Common Fields**
-
-| Field | Required | Type | Description |
-|-------|----------|------|-------------|
-| `path` | Yes | string | URL path prefix (e.g., `/api`). |
-| `type` | Yes | string | Either `proxy` or `static`. |
-
----
-
-## Proxy Route Format
-
-Proxy routes forward requests to backend servers.
-
-```yaml
-- path: /api
-  type: proxy
-  backends:
-    - http://127.0.0.1:4000
-    - http://127.0.0.1:5000
-```
-
-### **Rules**
-
-- `backends` **must NOT be empty**.
-- Load balancing is automatically round-robin.
-
----
-
-## Static Route Format
-
-Static routes serve files from a directory.
-
-```yaml
-- path: /
-  type: static
-  dir: /var/proxyx/site
-```
-
-### **Rules**
-
-- `dir` **must NOT be empty**.
-- Must point to an existing directory.
-
----
-
-Applying Configuration via CLI
-
-ProxyX provides a CLI command to apply a YAML configuration and validate its format before applying:
-
-proxyx apply -f /path/to/config.yaml
-
-Behavior:
-
-1. Reads the YAML file.
-2. Validates structure:
-   - servers must not be empty
-   - Each server must have a domain
-   - Routes must have valid type, path
-   - proxy routes require at least 1 backend
-   - static routes require a non-empty dir
-3. Saves the validated file into /etc/proxyx/configs/
-4. Reloads the running ProxyX service if active
-
-Example output:
-
-Configuration applied successfully: /etc/proxyx/configs/config.yaml
-
-
-## Full Example (Valid YAML)
-
-```yaml
-servers:
-  - domain: example.com
-    routes:
-      - path: /api
-        type: proxy
-        backends:
-          - http://localhost:8080
-      - path: /
-        type: static
-        dir: /usr/share/nginx/html
-```
-
----
-
-## Invalid Examples
-
-### Missing backends when type = proxy
-
-```yaml
-type: proxy
-backends: []
-```
-
-### Missing dir when type = static
-
-```yaml
-type: static
-dir:
-```
-
----
-
-## ✔️ Formatting Rules
-
-- Must follow YAML indentation (2 spaces recommended)
-- No trailing comments allowed
-- No trailing slashes unless intended
-- Paths must begin with `/`
+MIT License

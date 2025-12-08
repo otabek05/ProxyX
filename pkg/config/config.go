@@ -11,11 +11,9 @@ import (
 
 
 
-
 func LoadConfig() ([]common.ServerConfig, error)  {
 	configDir := "/etc/proxyx/configs"
 	var finalConfig []common.ServerConfig
-
 	files , err := filepath.Glob(filepath.Join(configDir, "*.yaml"))
 	if err != nil {
 		return  nil, err 
