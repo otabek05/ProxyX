@@ -135,11 +135,10 @@ rateLimit:
   requests: 1000
   windowSeconds: 2
 ```
----
 
-✅ Protects domains independently
-✅ Prevents cross‑domain poisoning
-✅ Applied across **all routes under the domain**
+* Protects domains independently
+* Prevents cross‑domain poisoning
+* Applied across **all routes under the domain**
 
 ---
 
