@@ -325,8 +325,6 @@ sudo make uninstall
 
 ## MacOS
 
-### Manual Removal
-
 ```bash
 # ---- Manual Removal ----
   sudo launchctl stop proxyx
