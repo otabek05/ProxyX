@@ -281,10 +281,9 @@ ProxyX automatically installs itself as a **Linux system service (`proxyx.servic
 
 ProxyX supports **Linux** and **macOS**.
 
-
 ---
 
-## Linux Installation
+## Linux
 
 ```bash
 git clone https://github.com/otabek05/proxyx.git
@@ -296,7 +295,7 @@ sudo proxyx status
 
 ---
 
-## MacOS Installation
+## MacOS 
 
 ```bash
 git clone https://github.com/otabek05/proxyx.git
@@ -313,7 +312,7 @@ To completely remove ProxyX from your system:
 
 ## Linux
 
-### Mannual Remove
+### Manual Removal
 
 ```bash
 sudo systemctl stop proxyx
@@ -324,7 +323,7 @@ sudo rm -rf /etc/proxyx
 sudo systemctl daemon-reload
 ```
 
-### Uninstall with Makefile
+### Removal Using Makefile
 
 ```bash
 cd ~/proxyx 
@@ -335,7 +334,7 @@ sudo make uninstall
 
 ## MacOS
 
-### Mannual Remove
+### Manual Removal
 
 ```bash
   sudo launchctl stop proxyx
@@ -348,7 +347,7 @@ sudo make uninstall
 
 ---
 
-### Uninstall with Makefile
+### Removal Using Makefile
 
 ```bash
 cd ~/proxyx 
