@@ -311,7 +311,7 @@ sudo proxyx status
 
 To completely remove ProxyX from your system:
 
-## Linux Uninstallation
+## Linux
 
 ### Mannual Remove
 
@@ -335,7 +335,7 @@ sudo make uninstall
 
 ---
 
-## MacOS Installation
+## MacOS
 
 ### Mannual Remove
 
