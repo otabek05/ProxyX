@@ -135,6 +135,7 @@ rateLimit:
   requests: 1000
   windowSeconds: 5
 ```
+---
 
 ✅ Protects domains independently
 ✅ Prevents cross‑domain poisoning
