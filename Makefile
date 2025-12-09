@@ -1,37 +1,31 @@
 APP_NAME=proxyx
-BIN=bin/$(APP_NAME)
 
 all: build
 
 build:
-	@echo "Building $(APP_NAME)..."
-	GOOS=linux GOARCH=amd64 go build -o $(BIN) ./cmd/proxy/
-	@chmod +x $(BIN)
-	@echo "Build complete → $(BIN) is now executable"
+	@mkdir -p bin/linux
+	GOOS=linux GOARCH=amd64 go build -o bin/linux/$(APP_NAME) ./cmd/proxy/
+	@chmod +x bin/linux/$(APP_NAME)
 
-run: build
-	@echo "Running $(APP_NAME)..."
-	./bin/proxy --config=configs/proxy.yaml --port=8000
+build-macos:
+	@mkdir -p bin/macos
+	GOOS=darwin GOARCH=arm64 go build -o bin/macos/$(APP_NAME) ./cmd/proxy/
+	@chmod +x bin/macos/$(APP_NAME)
+
+run:
+	./bin/linux/$(APP_NAME)
 
 install: build
-	@echo "Installing service..."
 	bash ./scripts/install_service.sh
 
 uninstall:
-	@echo "Uninstalling service..."
 	bash ./scripts/uninstall_service.sh
 
-start:
-	sudo systemctl start $(APP_NAME)
+install-macos: build-macos
+	bash ./scripts/install_service_macos.sh
 
-stop:
-	sudo systemctl stop $(APP_NAME)
-
-restart:
-	sudo systemctl restart $(APP_NAME)
-
-status:
-	sudo systemctl status $(APP_NAME)
+uninstall-macos:
+	bash ./scripts/uninstall_service_macos.sh
 
 logs:
 	sudo journalctl -u $(APP_NAME) -f
