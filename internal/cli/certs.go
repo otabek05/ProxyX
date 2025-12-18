@@ -23,7 +23,7 @@ var certCmd = &cobra.Command{
 	Use:   "cert",
 	Short: "Issue TLS certificate for a domain using certbot",
 	Run: func(cmd *cobra.Command, args []string) {
-		configDir := "/etc/proxyx/configs"
+		configDir := "/etc/proxyx/conf.d"
 		files, err := filepath.Glob(filepath.Join(configDir, "*.yaml"))
 		if err != nil || len(files) == 0 {
 			fmt.Println("No config files found.")

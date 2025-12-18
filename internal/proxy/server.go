@@ -12,12 +12,13 @@ import (
 
 type ProxyServer struct {
 	router    http.Handler
+	proxyConfig *common.ProxyConfig
 	config    []common.ServerConfig
 	certCache map[string]*tls.Certificate
 }
 
-func NewServer(config []common.ServerConfig) *ProxyServer {
-	p := &ProxyServer{config: config}
+func NewServer(config []common.ServerConfig, proxyConfig *common.ProxyConfig) *ProxyServer {
+	p := &ProxyServer{config: config, proxyConfig: proxyConfig}
 	p.router = NewRouter(config)
 	return p
 }
@@ -31,7 +32,6 @@ func (p *ProxyServer) Start() {
 
 	go p.runHTTP()
 
-	
 	tlsConfig := &tls.Config{
 		GetCertificate: p.getCertificate,
 	}
@@ -40,7 +40,7 @@ func (p *ProxyServer) Start() {
 		Addr:              ":443",
 		Handler:           p.router,
 		TLSConfig:         tlsConfig,
-		ReadTimeout:       15 * time.Second,
+		ReadTimeout:       p.proxyConfig.HTTPS.ReadTimeout,
 		ReadHeaderTimeout: 10 * time.Second,
 		WriteTimeout:      30 * time.Second,
 		IdleTimeout:       60 * time.Second,
@@ -109,26 +109,4 @@ func (p *ProxyServer) runHTTP()  {
 
 	log.Println("HTTP Proxy server running on :80")
 	log.Fatal(httpServer.ListenAndServe())
-}
-
-
-func (p *ProxyServer) runHTTPS() {
-
-	tlsConfig := &tls.Config{
-		GetCertificate: p.getCertificate,
-	}
-
-	server := &http.Server{
-		Addr:              ":443",
-		Handler:           p.router,
-		TLSConfig:         tlsConfig,
-		ReadTimeout:       15 * time.Second,
-		ReadHeaderTimeout: 10 * time.Second,
-		WriteTimeout:      30 * time.Second,
-		IdleTimeout:       60 * time.Second,
-		MaxHeaderBytes:    1 << 20, 
-	}
-
-	log.Println("HTTPS Proxy server running on :443")
-	log.Fatal(server.ListenAndServeTLS("", ""))
 }

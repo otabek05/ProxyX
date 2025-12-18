@@ -26,7 +26,7 @@ var configCmd = &cobra.Command{
 	Short: "Print configured proxy configs",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		output, _ := cmd.Flags().GetString("output")
-		configDir := "/etc/proxyx/configs"
+		configDir := "/etc/proxyx/conf.d"
 
 		files, err := filepath.Glob(filepath.Join(configDir, "*.yaml"))
 		if err != nil {
@@ -56,7 +56,7 @@ var configCmd = &cobra.Command{
 				"RATELIMIT", "TLS",
 			})
 		} else {
-			table.Header([]string{"NAME","DOMAIN", "PATH", "TYPE", "TARGET"})
+			table.Header([]string{"NAME", "DOMAIN", "PATH", "TYPE", "TARGET"})
 		}
 
 		for _, file := range files {

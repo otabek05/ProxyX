@@ -44,8 +44,8 @@ var applyCmd = &cobra.Command{
 			return
 		}
 
-		destDir := "/etc/proxyx/configs"
-		desFile := filepath.Join(destDir, filepath.Base(server.Metadata.Name + ".yaml"))
+		destDir := "/etc/proxyx/conf.d"
+		desFile := filepath.Join(destDir, filepath.Base(server.Metadata.Name+".yaml"))
 		if err := hasRouteConflict(&server, desFile); err != nil {
 			fmt.Println(err.Error())
 			return
@@ -59,7 +59,7 @@ var applyCmd = &cobra.Command{
 
 		if server.Spec.RateLimit == nil {
 			server.Spec.RateLimit = &common.RateLimitConfig{
-				Requests: 1200,
+				Requests:      1200,
 				WindowSeconds: 1,
 			}
 		}
@@ -86,7 +86,7 @@ func isValidFormat(srv *common.ServerConfig) error {
 		}
 
 		if !route.Type.IsValid() {
-			return  fmt.Errorf("server: '%s' has invalid type", srv.Spec.Domain)
+			return fmt.Errorf("server: '%s' has invalid type", srv.Spec.Domain)
 		}
 
 		switch route.Type {
@@ -109,7 +109,7 @@ func isValidFormat(srv *common.ServerConfig) error {
 }
 
 func hasRouteConflict(newCfg *common.ServerConfig, newCfgFile string) error {
-	configDir := "/etc/proxyx/configs"
+	configDir := "/etc/proxyx/conf.d"
 	files, err := filepath.Glob(filepath.Join(configDir, "*.yaml"))
 	if err != nil {
 		return err

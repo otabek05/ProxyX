@@ -22,7 +22,7 @@ var deleteCmd = &cobra.Command{
   `,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		name := args[0]
-		configDir := "/etc/proxyx/configs"
+		configDir := "/etc/proxyx/conf.d"
 
 		files, err := os.ReadDir(configDir)
 		if err != nil {
@@ -55,7 +55,6 @@ var deleteCmd = &cobra.Command{
 			return fmt.Errorf("failed to delete: %v", err)
 		}
 
-		
 		fmt.Printf("Deleted configuration '%s' (file: %s)\n", name, filepath.Base(matchedFile))
 		restartProxyX()
 		return nil
