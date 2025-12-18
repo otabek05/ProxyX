@@ -2,6 +2,7 @@ package healthchecker
 
 import (
 	"net/http"
+	"net/url"
 	"sync"
 	"time"
 )
@@ -48,7 +49,8 @@ func Start(interval time.Duration) {
 
 
 func checkHealth(b *Server, client *http.Client) {
-	resp , err := client.Get(b.URL.String())
+	u := b.URL.ResolveReference(&url.URL{Path: b.Path})
+	resp , err := client.Get(u.String())
 	health := err == nil && resp.StatusCode < 500
 	b.SetHealthy(health)
 }

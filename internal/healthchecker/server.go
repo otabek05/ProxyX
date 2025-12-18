@@ -8,6 +8,7 @@ import (
 type Server struct {
 	URL *url.URL
 	Health bool
+	Path string 
 	mu sync.RWMutex
 }
 

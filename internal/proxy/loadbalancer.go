@@ -27,6 +27,7 @@ func NewLoadBalancer(backendUrls []common.ProxyServer, proxyConfig *common.Proxy
 
 	    server :=  &healthchecker.Server{
 			URL: customUrl,
+			Path: proxyConfig.HealthCheck.Path,
 			Health: true,
 		}
 
