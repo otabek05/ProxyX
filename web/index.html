@@ -3,49 +3,82 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ProxyX Service</title>
+<title>ProxyX</title>
 <style>
   body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 40px;
-    background: #f0f2f5;
-    color: #333;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 40px;
+    background: #f4f6f8;
+    color: #2c2f33;
   }
+
   .container {
-    text-align: left;
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0;
   }
+
   h1 {
-    font-size: 2rem;
-    margin-bottom: 12px;
-    color: #4a90e2;
+    font-size: 2.2rem;
+    margin-bottom: 16px;
+    color: #2563eb;
   }
+
   p {
     font-size: 1rem;
+    line-height: 1.6;
     margin-bottom: 16px;
   }
-  a {
-    display: inline-block;
-    padding: 8px 16px;
-    background: #4a90e2;
-    color: white;
-    border-radius: 6px;
-    text-decoration: none;
-    font-weight: bold;
+
+  .features {
+    margin-top: 24px;
   }
-  a:hover {
-    background: #357ABD;
+
+  .features ul {
+    padding-left: 20px;
+  }
+
+  .features li {
+    margin-bottom: 10px;
+  }
+
+  .footer {
+    margin-top: 32px;
+    font-size: 0.9rem;
+    color: #6b7280;
   }
 </style>
 </head>
 <body>
   <div class="container">
     <h1>ProxyX</h1>
-    <p>Welcome to ProxyX Service! No matching route or server was found.</p>
-    <a href="/">Go to Home</a>
+
+    <p>
+      ProxyX is a modern, high-performance reverse proxy and service delivery platform
+      designed for reliability, security, and operational simplicity.
+    </p>
+
+    <p>
+      No matching route or service was found for the requested host or path.
+      This response is served by ProxyX as a default fallback.
+    </p>
+
+    <div class="features">
+      <p><strong>Key capabilities:</strong></p>
+      <ul>
+        <li>Layer-7 Load Balancer with active health checking</li>
+        <li>Static file hosting and asset delivery</li>
+        <li>Built-in rate limiting and traffic protection</li>
+        <li>Automatic TLS certificate management via Certbot</li>
+        <li>CLI tools for service management and automation</li>
+        <li>Kubernetes-style declarative configuration</li>
+      </ul>
+    </div>
+
+    <div class="footer">
+      ProxyX • Secure • Extensible • Production-ready
+    </div>
   </div>
 </body>
 </html>
