@@ -5,7 +5,7 @@ After=network.target
 [Service]
 ExecStart=/usr/local/bin/proxyx 
 ExecReload=/bin/kill -HUP %MAINPID
-Restart=always
+Restart=on-failure
 User=root
 
 [Install]

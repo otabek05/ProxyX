@@ -10,8 +10,8 @@ import (
 )
 
 func main() {
+	requireRoot()
 	if len(os.Args) > 1 {
-		requireRoot()
 		cli.Execute()
 		return
 	}
