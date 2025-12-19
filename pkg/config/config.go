@@ -38,7 +38,6 @@ func LoadConfig() ([]common.ServerConfig, error)  {
 }
 
 
-
 func mergeConfigs(dst []common.ServerConfig, src *common.ServerConfig) []common.ServerConfig {
 	    found := false
 		for i := range dst {
