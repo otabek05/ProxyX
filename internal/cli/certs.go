@@ -4,6 +4,7 @@ import (
 	"ProxyX/internal/common"
 	"ProxyX/utils"
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -19,101 +20,47 @@ func (c *CLI) certCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "cert",
 	    Short: "Issue TLS certificate for a domain using certbot",
-		Run: func(cmd *cobra.Command, args []string)  {
-			configDir := "/etc/proxyx/conf.d"
-		files, err := filepath.Glob(filepath.Join(configDir, "*.yaml"))
+		RunE: func(cmd *cobra.Command, args []string) error  {
+		files, err := filepath.Glob(filepath.Join(c.serviceConfig, "*.yaml"))
 		if err != nil || len(files) == 0 {
-			fmt.Println("No config files found.")
-			return
+			return errors.New("No config files found.")
 		}
 
 		domainMap := make(map[int]string)
-		printDomains(files, domainMap)
+		c.printDomains(files, domainMap)
 		if len(domainMap) == 0 {
-			fmt.Println("No domains found in configs.")
-			return
+			return errors.New("No domains found in configs.")
 		}
 
 		reader := bufio.NewReader(os.Stdin)
-		domain, err := requestDomain(reader, domainMap)
+		domain, err := c.requestDomain(reader, domainMap)
 		if err != nil {
-			os.Exit(1)
+			return err 
 		}
 
-		email, err := requestEmail(reader)
+		email, err := c.requestEmail(reader)
 		if err != nil {
-			fmt.Println("Email input cancelled.")
-			return
+			return err 
 		}
 
 		fmt.Println("\nRequesting certificate for:", domain)
 		c.Service.Stop()
 
-		if err := requestCert(domain, email); err != nil {
-			fmt.Println("Certbot failed:", err)
-			os.Exit(1)
+		if err := c.requestCert(domain, email); err != nil {
+			return fmt.Errorf("Certbot failed: %v", err )
 		}
 
 		fmt.Println("\nCertificate issued successfully!")
-		applyCerts(&domain, files)
+		c.applyCerts(&domain, files)
 
 		fmt.Println("\nReloading ProxyX...")
-		c.Service.Restart()
+		return c.Service.Restart()
 		},
 	}
 }
 
-/*
 
-var certCmd = &cobra.Command{
-	Use:   "cert",
-	Short: "Issue TLS certificate for a domain using certbot",
-	Run: func(cmd *cobra.Command, args []string) {
-		configDir := "/etc/proxyx/conf.d"
-		files, err := filepath.Glob(filepath.Join(configDir, "*.yaml"))
-		if err != nil || len(files) == 0 {
-			fmt.Println("No config files found.")
-			return
-		}
-
-		domainMap := make(map[int]string)
-		printDomains(files, domainMap)
-		if len(domainMap) == 0 {
-			fmt.Println("No domains found in configs.")
-			return
-		}
-
-		reader := bufio.NewReader(os.Stdin)
-		domain, err := requestDomain(reader, domainMap)
-		if err != nil {
-			os.Exit(1)
-		}
-
-		email, err := requestEmail(reader)
-		if err != nil {
-			fmt.Println("Email input cancelled.")
-			return
-		}
-
-		fmt.Println("\nRequesting certificate for:", domain)
-		stopProxyX()
-
-		if err := requestCert(domain, email); err != nil {
-			fmt.Println("Certbot failed:", err)
-			os.Exit(1)
-		}
-
-		fmt.Println("\nCertificate issued successfully!")
-		applyCerts(&domain, files)
-
-		fmt.Println("\nReloading ProxyX...")
-		restartProxyX()
-	},
-}
-
-*/
-
-func requestDomain(reader *bufio.Reader, domainMap map[int]string) (string, error) {
+func (c *CLI) requestDomain(reader *bufio.Reader, domainMap map[int]string) (string, error) {
 	for {
 		fmt.Print("\nSelect domain number (q to exit): ")
 
@@ -144,7 +91,7 @@ func requestDomain(reader *bufio.Reader, domainMap map[int]string) (string, erro
 	}
 }
 
-func requestEmail(reader *bufio.Reader) (string, error) {
+func (c *CLI) requestEmail(reader *bufio.Reader) (string, error) {
 	for {
 		fmt.Print("Enter email for Let's Encrypt (q to exit): ")
 
@@ -168,7 +115,7 @@ func requestEmail(reader *bufio.Reader) (string, error) {
 	}
 }
 
-func applyCerts(domain *string, files []string) {
+func (c *CLI) applyCerts(domain *string, files []string) {
 	certPath := "/etc/letsencrypt/live/" + *domain + "/fullchain.pem"
 	keyPath := "/etc/letsencrypt/live/" + *domain + "/privkey.pem"
 
@@ -196,7 +143,7 @@ func applyCerts(domain *string, files []string) {
 	}
 }
 
-func requestCert(domain, email string) error {
+func (c *CLI) requestCert(domain, email string) error {
 	certCmd := exec.Command(
 		"certbot", "certonly",
 		"--standalone",
@@ -211,7 +158,7 @@ func requestCert(domain, email string) error {
 	return certCmd.Run()
 }
 
-func printDomains(files []string, domainMap map[int]string) {
+func (c *CLI) printDomains(files []string, domainMap map[int]string) {
 	fmt.Println("\nAvailable Domains:")
 	fmt.Println("-------------------------")
 

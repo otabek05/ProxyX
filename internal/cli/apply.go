@@ -53,13 +53,12 @@ func (c *CLI) runApply(file string) error {
 		return err 
 	}
 
-	destDir := "/etc/proxyx/conf.d"
-	desFile := filepath.Join(destDir, filepath.Base(server.Metadata.Name+".yaml"))
+	desFile := filepath.Join(c.serviceConfig, filepath.Base(server.Metadata.Name+".yaml"))
 	if err := hasRouteConflict(&server, desFile); err != nil {
 		return err
 	}
 
-	err = os.MkdirAll(destDir, 0755)
+	err = os.MkdirAll(c.serviceConfig, 0755)
 	if err != nil {
 		return fmt.Errorf("Failed to created dir:%v", err)
 	}

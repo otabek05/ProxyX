@@ -11,6 +11,9 @@ import (
 type CLI struct {
 	Service platform.Service
 	root    *cobra.Command
+	serviceConfig string
+	proxyXConfig string  
+
 }
 
 func NewCLI(service platform.Service) *CLI {
@@ -23,6 +26,8 @@ func NewCLI(service platform.Service) *CLI {
 	cli := &CLI{
 		Service: service,
 		root: rootCmd,
+		serviceConfig:  "/etc/proxyx/conf.d",
+
 	}
 
 	cli.root.AddCommand(cli.applyConfigCmd())
@@ -46,18 +51,3 @@ func (c *CLI) Execute() {
 		os.Exit(1)
 	}
 }
-
-/*
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
-
-var rootCmd = &cobra.Command{
-	Use:   "proxyx",
-	Short: "ProxyX CLI too and server",
-}
-
-*/
