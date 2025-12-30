@@ -6,7 +6,6 @@ all: build
 build:
 	@mkdir -p dist/bin/linux
 	GOOS=linux GOARCH=amd64 go build -o dist/bin/linux/$(APP_NAME) ./cmd/proxyx/
-	@chmod +x bin/linux/$(APP_NAME)
 
 build-macos:
 	@mkdir -p dist/bin/macos

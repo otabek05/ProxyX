@@ -1,22 +1,23 @@
 package proxy
 
-
 import (
-	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/valyala/fasthttp"
 )
 
-func ServeProxyHomepage(w http.ResponseWriter) {
+func ServeProxyHomepage(ctx *fasthttp.RequestCtx) {
 	path := filepath.Join("/etc/proxyx/web", "index.html")
 	content, err := os.ReadFile(path)
 	if err != nil {
-		http.Error(w, "Default page not found", http.StatusInternalServerError)
+		ctx.SetStatusCode(fasthttp.StatusInternalServerError)
+		ctx.SetBodyString("Default page not found")
 		return
 	}
 
-	w.Header().Set("Content-Type", "text/html")
-	w.WriteHeader(http.StatusOK)
-	w.Write(content)
+	ctx.SetStatusCode(fasthttp.StatusOK)
+	ctx.SetContentType("text/html")
+	ctx.SetBody(content)
 }
 

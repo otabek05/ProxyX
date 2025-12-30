@@ -2,41 +2,44 @@ package proxy
 
 import (
 	"ProxyX/internal/common"
-	"fmt"
-	"net"
-	"net/http"
 	"strings"
+
+	"github.com/valyala/fasthttp"
 )
 
-func handleRequest(w http.ResponseWriter, r *http.Request, servers map[string][]routeInfo) {
-	routes, ok := servers[r.Host]
+func (p *ProxyServer) handleRequest(ctx *fasthttp.RequestCtx, servers map[string][]routeInfo) {
+	host := string(ctx.Host())
+	path := string(ctx.Path())
+
+	routes, ok := servers[host]
 	if !ok {
-		ServeProxyHomepage(w)
+		ServeProxyHomepage(ctx)
 		return
 	}
 
-	matched := findMatchingRoute(routes, r.URL.Path)
+	matched := findMatchingRoute(routes, path)
 	if matched == nil {
-		ServeProxyHomepage(w)
+		ServeProxyHomepage(ctx)
 		return
 	}
 
-	ip, _, _ := net.SplitHostPort(r.RemoteAddr)
-	if !matched.rateLimiter.Allow(ip) {
-		w.WriteHeader(http.StatusTooManyRequests)
-		w.Write([]byte("429 Too Many Requests"))
-		return
-	}
+	ip := ctx.RemoteAddr().String() // get remote IP:port
+    if !matched.rateLimiter.Allow(ip) {
+        ctx.SetStatusCode(fasthttp.StatusTooManyRequests)
+        ctx.SetBodyString("429 Too Many Requests")
+        return
+    }
+	
 
 	switch matched.routeConfig.Type {
 	case common.RouteReverseProxy:
-		reverseProxyxHandler(w, r, matched)
+		p.reverseProxyxHandler(ctx, matched)
 	case common.RouteStatic:
-		staticRouteHandler(w, r, matched)
+		staticRouteHandler(ctx, matched)
 	case common.RouteWebsocket:
-		websocketProxyHandler(w, r, matched)
+		websocketProxyHandler(ctx, matched)
 	default:
-		ServeProxyHomepage(w)
+		ServeProxyHomepage(ctx)
 	}
 }
 
@@ -72,10 +75,3 @@ func findMatchingRoute(routes []routeInfo, path string) *routeInfo {
 	return nil
 }
 
-func printServers(servers map[string][]routeInfo) {
-	for k, v := range servers {
-		for _, r := range v {
-			fmt.Printf("Host: %s Route: %s\n", k, r.routeConfig.Path)
-		}
-	}
-}

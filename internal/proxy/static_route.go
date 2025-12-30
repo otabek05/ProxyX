@@ -1,31 +1,32 @@
 package proxy
 
 import (
-	"log"
-	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/valyala/fasthttp"
 )
 
-func staticRouteHandler(w http.ResponseWriter, r *http.Request, matched *routeInfo) {
+func staticRouteHandler(ctx *fasthttp.RequestCtx, matched *routeInfo) {
 	if matched.routeConfig.Static == nil || matched.routeConfig.Static.Root == "" {
-		ServeProxyHomepage(w)
+		ctx.SetStatusCode(fasthttp.StatusOK)
+		ctx.SetBodyString("Proxy Homepage")
 		return
 	}
 
 	staticDir := filepath.Join(matched.routeConfig.Static.Root)
-	requestedFile := filepath.Join(staticDir, r.URL.Path)
+	requestedFile := filepath.Join(staticDir, string(ctx.Path()))
 	if info, err := os.Stat(requestedFile); err == nil && !info.IsDir() {
-		http.ServeFile(w, r, requestedFile)
+		fasthttp.ServeFile(ctx, requestedFile)
 		return
 	}
 
 	indexFile := filepath.Join(staticDir, "index.html")
 	if _, err := os.Stat(indexFile); os.IsNotExist(err) {
-		log.Println("index.html not found at", indexFile)
-		ServeProxyHomepage(w)
+		ctx.SetStatusCode(fasthttp.StatusOK)
+		ctx.SetBodyString("Proxy Homepage")
 		return
 	}
 
-	http.ServeFile(w, r, indexFile)
+	fasthttp.ServeFile(ctx, indexFile)
 }

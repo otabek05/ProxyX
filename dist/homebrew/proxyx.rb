@@ -5,13 +5,13 @@
 class Proxyx < Formula
   desc "ProxyX Reverse Proxy Service"
   homepage "https://github.com/otabek05/proxyx"
-  version "0.1.0-SNAPSHOT-38a7d3c"
+  version "0.1.0-SNAPSHOT-27248c0"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.intel?
-      url "https://github.com/otabek05/proxyx/releases/download/v0.1.0/proxyx_0.1.0-SNAPSHOT-38a7d3c_darwin_amd64.tar.gz"
-      sha256 "a1f323e6f781617308029236718602efa9e0302e3a38f337665eda41a63fec87"
+      url "https://github.com/otabek05/proxyx/releases/download/v0.1.0/proxyx_0.1.0-SNAPSHOT-27248c0_darwin_amd64.tar.gz"
+      sha256 "0c28f53dbabdb51ecfcb5a03fc4281fc460f309319fa97f7eecac23e73ac53e2"
 
       def install
         bin.install "proxyx"
@@ -19,8 +19,8 @@ class Proxyx < Formula
       end
     end
     if Hardware::CPU.arm?
-      url "https://github.com/otabek05/proxyx/releases/download/v0.1.0/proxyx_0.1.0-SNAPSHOT-38a7d3c_darwin_arm64.tar.gz"
-      sha256 "206e066059ce7b41504d5e5b83c2c88c9740be0c47c79589b75f0b0b7b65a79b"
+      url "https://github.com/otabek05/proxyx/releases/download/v0.1.0/proxyx_0.1.0-SNAPSHOT-27248c0_darwin_arm64.tar.gz"
+      sha256 "de79cebfde9e813ee529cad3eed82c43ec8f684e8d23c2c3d19bdae83f11e4f8"
 
       def install
         bin.install "proxyx"
@@ -31,16 +31,16 @@ class Proxyx < Formula
 
   on_linux do
     if Hardware::CPU.intel? && Hardware::CPU.is_64_bit?
-      url "https://github.com/otabek05/proxyx/releases/download/v0.1.0/proxyx_0.1.0-SNAPSHOT-38a7d3c_linux_amd64.tar.gz"
-      sha256 "1b767784c510233ae61eb762d980b05a26de66392b6252f54c8b41abfcafb0b5"
+      url "https://github.com/otabek05/proxyx/releases/download/v0.1.0/proxyx_0.1.0-SNAPSHOT-27248c0_linux_amd64.tar.gz"
+      sha256 "3330b61a95c07d7c6aec6ab283306f1101e7a1b3108f6b126fa08f8b31a02396"
       def install
         bin.install "proxyx"
         etc.install Dir["web"] => "proxyx"
       end
     end
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
-      url "https://github.com/otabek05/proxyx/releases/download/v0.1.0/proxyx_0.1.0-SNAPSHOT-38a7d3c_linux_arm64.tar.gz"
-      sha256 "26d1a6ef23e17837f1520ccd0bec565deeee3912c6fe12227d059646c620ac55"
+      url "https://github.com/otabek05/proxyx/releases/download/v0.1.0/proxyx_0.1.0-SNAPSHOT-27248c0_linux_arm64.tar.gz"
+      sha256 "b30b1440dc72653ff91f46220b4812c62ad02dd9b81fb1ee46ce8c93e72c0387"
       def install
         bin.install "proxyx"
         etc.install Dir["web"] => "proxyx"

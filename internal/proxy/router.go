@@ -2,18 +2,19 @@ package proxy
 
 import (
 	"ProxyX/internal/common"
-	"net/http"
 	"sort"
 	"time"
+
+	"github.com/valyala/fasthttp"
 )
 
 type routeInfo struct {
-		loadBalancer   *LoadBalancer
-		rateLimiter   *RateLimiter
-		routeConfig   *common.RouteConfig
-	}
+	loadBalancer *LoadBalancer
+	rateLimiter  *RateLimiter
+	routeConfig  *common.RouteConfig
+}
 
-func NewRouter(config []common.ServerConfig, proxyConfig *common.ProxyConfig) http.Handler {
+func (p *ProxyServer) NewRouter(config []common.ServerConfig, proxyConfig *common.ProxyConfig) fasthttp.RequestHandler {
 	servers := make(map[string][]routeInfo)
 
 	for _, server := range config {
@@ -25,12 +26,12 @@ func NewRouter(config []common.ServerConfig, proxyConfig *common.ProxyConfig) ht
 		var routes []routeInfo
 		for _, route := range server.Spec.Routes {
 
-		    if route.Type == "" {
+			if route.Type == "" {
 				route.Type = common.RouteReverseProxy
 			}
 
 			var lb *LoadBalancer
-			if route.Type == common.RouteReverseProxy{
+			if route.Type == common.RouteReverseProxy {
 				var err error
 				lb, err = NewLoadBalancer(route.ReverseProxy.Servers, proxyConfig)
 				if err != nil {
@@ -44,11 +45,11 @@ func NewRouter(config []common.ServerConfig, proxyConfig *common.ProxyConfig) ht
 		sort.Slice(routes, func(i, j int) bool {
 			return len(routes[i].routeConfig.Path) > len(routes[j].routeConfig.Path)
 		})
-		
+
 		servers[server.Spec.Domain] = routes
 	}
 
-	return http.HandlerFunc(func (w http.ResponseWriter, r *http.Request)  {
-		handleRequest(w,r, servers)
-	})
+	return func(ctx *fasthttp.RequestCtx) {
+		p.handleRequest(ctx, servers)
+	}
 }
