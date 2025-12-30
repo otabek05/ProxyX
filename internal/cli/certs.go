@@ -19,46 +19,45 @@ import (
 func (c *CLI) certCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "cert",
-	    Short: "Issue TLS certificate for a domain using certbot",
-		RunE: func(cmd *cobra.Command, args []string) error  {
-		files, err := filepath.Glob(filepath.Join(c.serviceConfig, "*.yaml"))
-		if err != nil || len(files) == 0 {
-			return errors.New("No config files found.")
-		}
+		Short: "Issue TLS certificate for a domain using certbot",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			files, err := filepath.Glob(filepath.Join(c.serviceConfig, "*.yaml"))
+			if err != nil || len(files) == 0 {
+				return errors.New("No config files found.")
+			}
 
-		domainMap := make(map[int]string)
-		c.printDomains(files, domainMap)
-		if len(domainMap) == 0 {
-			return errors.New("No domains found in configs.")
-		}
+			domainMap := make(map[int]string)
+			c.printDomains(files, domainMap)
+			if len(domainMap) == 0 {
+				return errors.New("No domains found in configs.")
+			}
 
-		reader := bufio.NewReader(os.Stdin)
-		domain, err := c.requestDomain(reader, domainMap)
-		if err != nil {
-			return err 
-		}
+			reader := bufio.NewReader(os.Stdin)
+			domain, err := c.requestDomain(reader, domainMap)
+			if err != nil {
+				return err
+			}
 
-		email, err := c.requestEmail(reader)
-		if err != nil {
-			return err 
-		}
+			email, err := c.requestEmail(reader)
+			if err != nil {
+				return err
+			}
 
-		fmt.Println("\nRequesting certificate for:", domain)
-		c.Service.Stop()
+			fmt.Println("\nRequesting certificate for:", domain)
+			c.Service.Stop()
 
-		if err := c.requestCert(domain, email); err != nil {
-			return fmt.Errorf("Certbot failed: %v", err )
-		}
+			if err := c.requestCert(domain, email); err != nil {
+				return fmt.Errorf("Certbot failed: %v", err)
+			}
 
-		fmt.Println("\nCertificate issued successfully!")
-		c.applyCerts(&domain, files)
+			fmt.Println("\nCertificate issued successfully!")
+			c.applyCerts(&domain, files)
 
-		fmt.Println("\nReloading ProxyX...")
-		return c.Service.Restart()
+			fmt.Println("\nReloading ProxyX...")
+			return c.Service.Restart()
 		},
 	}
 }
-
 
 func (c *CLI) requestDomain(reader *bufio.Reader, domainMap map[int]string) (string, error) {
 	for {
@@ -134,8 +133,16 @@ func (c *CLI) applyCerts(domain *string, files []string) {
 			continue
 		}
 
-		server.Spec.TLS.CertFile = certPath
-		server.Spec.TLS.KeyFile = keyPath
+		if server.Spec.TLS == nil {
+			server.Spec.TLS = &common.TLSConfig{
+				CertFile: certPath,
+				KeyFile:  keyPath,
+			}
+		} else {
+			server.Spec.TLS.CertFile = certPath
+			server.Spec.TLS.KeyFile = keyPath
+		}
+
 		out, _ := yaml.Marshal(&server)
 		os.WriteFile(file, out, 0644)
 		fmt.Println("TLS updated in:", filepath.Base(file))
