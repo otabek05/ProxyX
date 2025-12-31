@@ -14,14 +14,14 @@ type ProxyServer struct {
 	proxyConfig *common.ProxyConfig
 	config      []common.ServerConfig
 	certCache   map[string]*tls.Certificate
-	proxies     map[string]*fasthttp.HostClient
+	proxies     map[string]*fasthttp.Client
 }
 
 func NewServer(config []common.ServerConfig, proxyConfig *common.ProxyConfig) *ProxyServer {
 	p := &ProxyServer{
 		config: config, 
 		proxyConfig: proxyConfig,
-		proxies: make(map[string]*fasthttp.HostClient),
+		proxies: make(map[string]*fasthttp.Client),
 	}
 	p.router = p.NewRouter(config, p.proxyConfig)
 	return p
@@ -52,8 +52,8 @@ func (p *ProxyServer) Start() {
 		ReadTimeout:        p.proxyConfig.HTTPS.ReadTimeout,
 		WriteTimeout:       p.proxyConfig.HTTPS.WriteTimeout,
 		IdleTimeout:        p.proxyConfig.HTTPS.IdleTimeout,
-		ReadBufferSize:     4096,
-		WriteBufferSize:    4096,
+		ReadBufferSize:     4 *1024 *1024,
+		WriteBufferSize:    4 *1024 *1024,
 		MaxRequestBodySize: 1024 * 1024,
 	}
 
@@ -116,8 +116,9 @@ func (p *ProxyServer) runHTTP() {
 		ReadTimeout:     p.proxyConfig.HTTP.ReadTimeout,
 		WriteTimeout:    p.proxyConfig.HTTP.WriteTimeout,
 		IdleTimeout:     p.proxyConfig.HTTP.IdleTimeout,
-		ReadBufferSize:  4096,
-		WriteBufferSize: 4096,
+		ReadBufferSize:  4 * 1024 *1024,
+		WriteBufferSize: 4 * 1024 *1024,
+		MaxRequestBodySize: 1024 * 1024,
 	}
 
 	log.Fatal(server.ListenAndServe(":80"))

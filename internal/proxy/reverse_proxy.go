@@ -20,59 +20,72 @@ var resPool = sync.Pool{
 func (p *ProxyServer) reverseProxyxHandler(ctx *fasthttp.RequestCtx, matched *routeInfo) {
 	target := matched.loadBalancer.Next()
 	if target == nil {
-		ServeProxyHomepage(ctx)
+		ctx.Error("No upstream", fasthttp.StatusServiceUnavailable)
 		return
 	}
 
-	proxyKey := target.String()
-	proxy, ok := p.proxies[proxyKey]
+	key := target.Scheme + "://" + target.Host
+	client, ok := p.proxies[key]
 	if !ok {
-
-		proxy = &fasthttp.HostClient{
-			Addr:                          target.Host,
-			IsTLS:                         target.Scheme == "https",
-			MaxConns:                      2000,
-			MaxIdleConnDuration:           30 * time.Second,
-			ReadTimeout:                   10 * time.Second,
-			WriteTimeout:                  10 * time.Second,
-			DisableHeaderNamesNormalizing: true,
-			TLSConfig: &tls.Config{
-				ServerName:         target.Hostname(),
-				InsecureSkipVerify: false,
-				MinVersion:         tls.VersionTLS12,
-			},
-		}
-
-		p.proxies[proxyKey] = proxy
+		client = newUpstreamClient(target.Scheme == "https")
+		p.proxies[key] = client
 	}
 
 	req := reqPool.Get().(*fasthttp.Request)
-	defer func() { req.Reset(); reqPool.Put(req) }()
+	defer func() {
+		req.Reset()
+		reqPool.Put(req)
+	}()
+
 	ctx.Request.CopyTo(req)
 
+	uri := req.URI()
+	uri.Reset()
+	uri.SetScheme(target.Scheme)
+	uri.SetHost(target.Host)
+	uri.SetPathBytes(ctx.Path())
+	uri.SetQueryStringBytes(ctx.QueryArgs().QueryString())
+
 	resp := resPool.Get().(*fasthttp.Response)
-	defer func() { resp.Reset(); resPool.Put(resp) }()
+	defer func() {
+		resp.Reset()
+		resPool.Put(resp)
+	}()
 
-	clientIP := string(ctx.Request.Header.Peek("X-Forwarded-For"))
-	if clientIP == "" {
-		clientIP = ctx.RemoteAddr().String()
-	}
-
-	if xff := req.Header.Peek("X-Forwarded-For"); len(xff) > 0 {
-		req.Header.Set("X-Forwarded-For", string(xff)+", "+clientIP)
-	} else {
-		req.Header.Set("X-Forwarded-For", clientIP)
-	}
-
-	//req.Header.Set("X-Forwarded-For", clientIP)
+	req.Header.Set("X-Forwarded-For", ctx.RemoteAddr().String())
 	req.Header.Set("X-Forwarded-Host", string(ctx.Host()))
-	req.Header.Set("X-Forwarded-Proto", map[bool]string{true: "https", false: "http"}[ctx.IsTLS()])
+	req.Header.Set("X-Forwarded-Proto", map[bool]string{
+		true:  "https",
+		false: "http",
+	}[ctx.IsTLS()])
 
-	if err := proxy.DoTimeout(req, resp, 5 *time.Second); err != nil {
-		log.Println(err)
-		ctx.Error("Failed to reach backend", fasthttp.StatusBadGateway)
+	if err := client.DoTimeout(req, resp, 5*time.Second); err != nil {
+		log.Println("upstream error:", err)
+		ctx.Error("Bad Gateway", fasthttp.StatusBadGateway)
 		return
 	}
 
 	resp.CopyTo(&ctx.Response)
+}
+
+
+
+func newUpstreamClient(isTLS bool) *fasthttp.Client {
+	c := &fasthttp.Client{
+		MaxConnsPerHost:     2048,
+		MaxIdleConnDuration: 30 * time.Second,
+		ReadTimeout:         15 * time.Second,
+		WriteTimeout:        15 * time.Second,
+	}
+
+	if isTLS {
+		c.TLSConfig = &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		}
+	}
+
+	c.DisableHeaderNamesNormalizing = true
+	c.NoDefaultUserAgentHeader = true
+
+	return c
 }

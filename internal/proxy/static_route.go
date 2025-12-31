@@ -3,7 +3,6 @@ package proxy
 import (
 	"os"
 	"path/filepath"
-
 	"github.com/valyala/fasthttp"
 )
 
@@ -23,8 +22,7 @@ func staticRouteHandler(ctx *fasthttp.RequestCtx, matched *routeInfo) {
 
 	indexFile := filepath.Join(staticDir, "index.html")
 	if _, err := os.Stat(indexFile); os.IsNotExist(err) {
-		ctx.SetStatusCode(fasthttp.StatusOK)
-		ctx.SetBodyString("Proxy Homepage")
+		ServeProxyHomepage(ctx)
 		return
 	}
 
