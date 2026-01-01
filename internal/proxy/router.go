@@ -1,11 +1,11 @@
 package proxy
 
+
 import (
 	"ProxyX/internal/common"
+	"net/http"
 	"sort"
 	"time"
-
-	"github.com/valyala/fasthttp"
 )
 
 type routeInfo struct {
@@ -14,18 +14,21 @@ type routeInfo struct {
 	routeConfig  *common.RouteConfig
 }
 
-func (p *ProxyServer) NewRouter(config []common.ServerConfig, proxyConfig *common.ProxyConfig) fasthttp.RequestHandler {
+func (p *ProxyServer) NewRouter(config []common.ServerConfig, proxyConfig *common.ProxyConfig) http.Handler {
 	servers := make(map[string][]routeInfo)
 
 	for _, server := range config {
 		if server.Spec.Domain == "" {
-			panic("Domain must be specified ")
+			panic("Domain must be specified")
 		}
 
-		rl := NewRateLimiter(server.Spec.RateLimit.Requests, time.Duration(server.Spec.RateLimit.WindowSeconds)*time.Minute)
+		rl := NewRateLimiter(
+			server.Spec.RateLimit.Requests,
+			time.Duration(server.Spec.RateLimit.WindowSeconds)*time.Minute,
+		)
+
 		var routes []routeInfo
 		for _, route := range server.Spec.Routes {
-
 			if route.Type == "" {
 				route.Type = common.RouteReverseProxy
 			}
@@ -39,7 +42,11 @@ func (p *ProxyServer) NewRouter(config []common.ServerConfig, proxyConfig *commo
 				}
 			}
 
-			routes = append(routes, routeInfo{loadBalancer: lb, rateLimiter: rl, routeConfig: &route})
+			routes = append(routes, routeInfo{
+				loadBalancer: lb,
+				rateLimiter:  rl,
+				routeConfig:  &route,
+			})
 		}
 
 		sort.Slice(routes, func(i, j int) bool {
@@ -49,7 +56,7 @@ func (p *ProxyServer) NewRouter(config []common.ServerConfig, proxyConfig *commo
 		servers[server.Spec.Domain] = routes
 	}
 
-	return func(ctx *fasthttp.RequestCtx) {
-		p.handleRequest(ctx, servers)
-	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		p.handleRequest(w, r, servers)
+	})
 }

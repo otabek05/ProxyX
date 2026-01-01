@@ -6,24 +6,29 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
-	"github.com/valyala/fasthttp"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
+	"time"
 )
 
 type ProxyServer struct {
-	router      fasthttp.RequestHandler
+	router      http.Handler
 	proxyConfig *common.ProxyConfig
 	config      []common.ServerConfig
 	certCache   map[string]*tls.Certificate
-	proxies     map[string]*fasthttp.Client
+	proxies     map[string]*httputil.ReverseProxy
 }
 
 func NewServer(config []common.ServerConfig, proxyConfig *common.ProxyConfig) *ProxyServer {
 	p := &ProxyServer{
-		config: config, 
+		config:      config,
 		proxyConfig: proxyConfig,
-		proxies: make(map[string]*fasthttp.Client),
+		certCache:   make(map[string]*tls.Certificate),
+		proxies:     make(map[string]*httputil.ReverseProxy),
 	}
-	p.router = p.NewRouter(config, p.proxyConfig)
+
+	p.router = http.HandlerFunc(p.re)
 	return p
 }
 
@@ -32,94 +37,126 @@ func (p *ProxyServer) Start() {
 		log.Fatal(err)
 	}
 
+	p.initProxies()
+
 	if p.proxyConfig.HealthCheck.Enabled {
 		healthchecker.Start(p.proxyConfig.HealthCheck.Interval)
 	}
 
-
-
 	go p.runHTTP()
-
-	tlsConfig := &tls.Config{
-		GetCertificate: p.getCertificate,
-	}
-
-
-	log.Println("HTTPS Proxy server running on :443")
-	httpsServer := &fasthttp.Server{
-		Handler:            p.router,
-		TLSConfig:          tlsConfig,
-		ReadTimeout:        p.proxyConfig.HTTPS.ReadTimeout,
-		WriteTimeout:       p.proxyConfig.HTTPS.WriteTimeout,
-		IdleTimeout:        p.proxyConfig.HTTPS.IdleTimeout,
-		ReadBufferSize:     4 *1024 *1024,
-		WriteBufferSize:    4 *1024 *1024,
-		MaxRequestBodySize: 1024 * 1024,
-	}
-
-	log.Println("HTTPS Proxy server running on :443")
-	log.Fatal(httpsServer.ListenAndServeTLS(":443", "",""))
+	p.runHTTPS()
 }
 
+func (p *ProxyServer) runHTTPS() {
+	tlsConfig := &tls.Config{
+		GetCertificate: p.getCertificate,
+		MinVersion:     tls.VersionTLS12,
+	}
+
+	server := &http.Server{
+		Addr:         ":443",
+		Handler:      p.router,
+		TLSConfig:   tlsConfig,
+		ReadTimeout: p.proxyConfig.HTTPS.ReadTimeout,
+		WriteTimeout: p.proxyConfig.HTTPS.WriteTimeout,
+		IdleTimeout:  p.proxyConfig.HTTPS.IdleTimeout,
+	}
+
+	log.Println("HTTPS Proxy server running on :443")
+	log.Fatal(server.ListenAndServeTLS("", ""))
+}
+
+func (p *ProxyServer) runHTTP() {
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if len(p.config) == 0 {
+			w.WriteHeader(http.StatusOK)
+			ServeProxyHomepageHTTP(w)
+			return
+		}
+
+		if _, ok := p.certCache[r.Host]; ok {
+			target := "https://" + r.Host + r.RequestURI
+			http.Redirect(w, r, target, http.StatusMovedPermanently)
+			return
+		}
+
+		p.router.ServeHTTP(w, r)
+	})
+
+	server := &http.Server{
+		Addr:         ":80",
+		Handler:      handler,
+		ReadTimeout:  p.proxyConfig.HTTP.ReadTimeout,
+		WriteTimeout: p.proxyConfig.HTTP.WriteTimeout,
+		IdleTimeout:  p.proxyConfig.HTTP.IdleTimeout,
+	}
+
+	log.Println("HTTP Proxy server running on :80")
+	log.Fatal(server.ListenAndServe())
+}
+/*
+func (p *ProxyServer) routeRequest(w http.ResponseWriter, r *http.Request) {
+	proxy, ok := p.proxies[r.Host]
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	proxy.ServeHTTP(w, r)
+}
+
+func (p *ProxyServer) initProxies() {
+	transport := &http.Transport{
+		MaxIdleConns:        1024,
+		MaxIdleConnsPerHost: 128,
+		IdleConnTimeout:    90 * time.Second,
+		DisableCompression: true,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ResponseHeaderTimeout: p.proxyConfig.HTTP.ReadTimeout,
+		ExpectContinueTimeout: 1 * time.Second,
+	}
+
+	for _, srv := range p.config {
+		u, err := url.Parse(srv.Spec.Backend.URL)
+		if err != nil {
+			log.Printf("Invalid backend URL %s: %v", srv.Spec.Backend.URL, err)
+			continue
+		}
+
+		proxy := httputil.NewSingleHostReverseProxy(u)
+		proxy.Transport = transport
+		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+			log.Printf("Proxy error [%s]: %v", r.Host, err)
+			http.Error(w, "Bad Gateway", http.StatusBadGateway)
+		}
+
+		p.proxies[srv.Spec.Domain] = proxy
+	}
+}
+	*/
+
 func (p *ProxyServer) loadAllCertificates() error {
-	p.certCache = make(map[string]*tls.Certificate)
 	for _, srv := range p.config {
 		if srv.Spec.TLS == nil {
 			continue
 		}
 
-		cert, err := tls.LoadX509KeyPair(srv.Spec.TLS.CertFile, srv.Spec.TLS.KeyFile)
+		cert, err := tls.LoadX509KeyPair(
+			srv.Spec.TLS.CertFile,
+			srv.Spec.TLS.KeyFile,
+		)
 		if err != nil {
-			fmt.Printf("TLS load failed for %s: %v", srv.Spec.Domain, err)
+			log.Printf("TLS load failed for %s: %v", srv.Spec.Domain, err)
 			continue
 		}
 
 		p.certCache[srv.Spec.Domain] = &cert
-		log.Println("Loaded TLS for:", srv.Spec.Domain)
 	}
-
 	return nil
 }
 
-func (p *ProxyServer) getCertificate(tslHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
-	domain := tslHello.ServerName
-
-	if cert, ok := p.certCache[domain]; ok {
+func (p *ProxyServer) getCertificate(hello *tls.ClientHelloInfo) (*tls.Certificate, error) {
+	if cert, ok := p.certCache[hello.ServerName]; ok {
 		return cert, nil
 	}
-
-	return nil, fmt.Errorf("no TLS cert for domain: %s", domain)
-}
-
-
-
-func (p *ProxyServer) runHTTP() {
-	handler := func(ctx *fasthttp.RequestCtx) {
-		if len(p.config) == 0 {
-			ctx.SetStatusCode(fasthttp.StatusOK)
-		    ServeProxyHomepage(ctx)
-			return
-		}
-
-		if _, ok := p.certCache[string(ctx.Host())]; ok {
-			target := "https://" + string(ctx.Host()) + string(ctx.RequestURI())
-			ctx.Redirect(target, fasthttp.StatusMovedPermanently)
-			return
-		}
-
-		p.router(ctx)
-	}
-
-	log.Println("HTTP Proxy server running on :80")
-	server := &fasthttp.Server{
-		Handler:         handler,
-		ReadTimeout:     p.proxyConfig.HTTP.ReadTimeout,
-		WriteTimeout:    p.proxyConfig.HTTP.WriteTimeout,
-		IdleTimeout:     p.proxyConfig.HTTP.IdleTimeout,
-		ReadBufferSize:  4 * 1024 *1024,
-		WriteBufferSize: 4 * 1024 *1024,
-		MaxRequestBodySize: 1024 * 1024,
-	}
-
-	log.Fatal(server.ListenAndServe(":80"))
+	return nil, fmt.Errorf("no TLS cert for domain: %s", hello.ServerName)
 }

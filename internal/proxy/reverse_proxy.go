@@ -1,91 +1,60 @@
 package proxy
 
 import (
-	"crypto/tls"
 	"log"
-	"sync"
+	"net/http"
+	"net/http/httputil"
+	"net/url"
 	"time"
-
-	"github.com/valyala/fasthttp"
 )
 
-var reqPool = sync.Pool{
-	New: func() interface{} { return new(fasthttp.Request) },
-}
-
-var resPool = sync.Pool{
-	New: func() interface{} { return new(fasthttp.Response) },
-}
-
-func (p *ProxyServer) reverseProxyxHandler(ctx *fasthttp.RequestCtx, matched *routeInfo) {
+func (p *ProxyServer) reverseProxyxHandler(w http.ResponseWriter, r *http.Request, matched *routeInfo) {
 	target := matched.loadBalancer.Next()
 	if target == nil {
-		ctx.Error("No upstream", fasthttp.StatusServiceUnavailable)
+		http.Error(w, "No upstream", http.StatusServiceUnavailable)
 		return
 	}
 
 	key := target.Scheme + "://" + target.Host
-	client, ok := p.proxies[key]
+	proxy, ok := p.proxies[key]
 	if !ok {
-		client = newUpstreamClient(target.Scheme == "https")
-		p.proxies[key] = client
+		u := &url.URL{
+			Scheme: target.Scheme,
+			Host:   target.Host,
+		}
+		proxy = newUpstreamProxy(u)
+		p.proxies[key] = proxy
 	}
 
-	req := reqPool.Get().(*fasthttp.Request)
-	defer func() {
-		req.Reset()
-		reqPool.Put(req)
-	}()
-
-	ctx.Request.CopyTo(req)
-
-	uri := req.URI()
-	uri.Reset()
-	uri.SetScheme(target.Scheme)
-	uri.SetHost(target.Host)
-	uri.SetPathBytes(ctx.Path())
-	uri.SetQueryStringBytes(ctx.QueryArgs().QueryString())
-
-	resp := resPool.Get().(*fasthttp.Response)
-	defer func() {
-		resp.Reset()
-		resPool.Put(resp)
-	}()
-
-	req.Header.Set("X-Forwarded-For", ctx.RemoteAddr().String())
-	req.Header.Set("X-Forwarded-Host", string(ctx.Host()))
-	req.Header.Set("X-Forwarded-Proto", map[bool]string{
-		true:  "https",
-		false: "http",
-	}[ctx.IsTLS()])
-
-	if err := client.DoTimeout(req, resp, 5*time.Second); err != nil {
-		log.Println("upstream error:", err)
-		ctx.Error("Bad Gateway", fasthttp.StatusBadGateway)
-		return
+	r.Header.Set("X-Forwarded-For", r.RemoteAddr)
+	r.Header.Set("X-Forwarded-Host", r.Host)
+	if r.TLS != nil {
+		r.Header.Set("X-Forwarded-Proto", "https")
+	} else {
+		r.Header.Set("X-Forwarded-Proto", "http")
 	}
 
-	resp.CopyTo(&ctx.Response)
+	proxy.ServeHTTP(w, r)
 }
 
-
-
-func newUpstreamClient(isTLS bool) *fasthttp.Client {
-	c := &fasthttp.Client{
-		MaxConnsPerHost:     2048,
-		MaxIdleConnDuration: 30 * time.Second,
-		ReadTimeout:         15 * time.Second,
-		WriteTimeout:        15 * time.Second,
+func newUpstreamProxy(target *url.URL) *httputil.ReverseProxy {
+	transport := &http.Transport{
+		MaxIdleConns:        2048,
+		MaxIdleConnsPerHost: 2048,
+		IdleConnTimeout:    30 * time.Second,
+		TLSHandshakeTimeout: 10 * time.Second,
+		ResponseHeaderTimeout: 15 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		DisableCompression: true,
 	}
 
-	if isTLS {
-		c.TLSConfig = &tls.Config{
-			MinVersion: tls.VersionTLS12,
-		}
+	proxy := httputil.NewSingleHostReverseProxy(target)
+	proxy.Transport = transport
+
+	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+		log.Println("upstream error:", err)
+		http.Error(w, "Bad Gateway", http.StatusBadGateway)
 	}
 
-	c.DisableHeaderNamesNormalizing = true
-	c.NoDefaultUserAgentHeader = true
-
-	return c
+	return proxy
 }
