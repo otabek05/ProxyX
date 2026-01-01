@@ -64,6 +64,9 @@ brews:
 
     test: |
       system "#{bin}/proxyx", "--version"
+    
+    goos:
+      - darwin
 
     repository:
       owner: otabek05
