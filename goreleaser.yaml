@@ -54,13 +54,5 @@ brews:
 
     install: |
       bin.install "proxyx"
-      etc.install Dir["web"] => "proxyx"
+      (etc/"proxyx").install "web"
 
-    post_install: |
-      system "sh", "-e", "-c", <<~'EOS'
-        mkdir -p "#{etc}/proxyx"
-        if [ -d "#{etc}/proxyx/web" ]; then
-          cp -R "#{etc}/proxyx/web/"* "#{etc}/proxyx/" || true
-          rm -rf "#{etc}/proxyx/web"
-        fi
-      EOS
