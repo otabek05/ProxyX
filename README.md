@@ -70,14 +70,20 @@ spec:
       type: ReverseProxy
       reverseProxy:
         servers:
-          - url: http://localhost:8080
-          - url: http://localhost:8081
+          - url: http://127.0.0.1:8080
+          - url: http://127.0.0.1:8081
 
     - name: static-files
       path: /**
       type: Static
       static:
         root: /path/to/static/file
+
+    - name: websocket-route
+      path: /ws/**    
+      type: Websocket
+      websocket:
+        url: ws://127.0.0.1:9000/ws
 ```
 
 ---
@@ -182,18 +188,19 @@ ProxyX includes a full lifecycle management CLI.
 
 ### ✅ Available Commands
 
-| Command           | Description                                     |
-| ----------------- | ----------------------------------------------- |
-| `apply`           | Apply configuration file                        |
-| `certs`           | **Interactive TLS issuance via Certbot**        |
-| `configs`         | Show active configurations                      |
-| `configs -o wide` | Show full detailed configuration                |
-| `delete`          | Delete applied configuration (default behavior) |
-| `delete [name]`   | Delete configuration by its **name**            |
-| `restart`         | Reload ProxyX configuration                     |
-| `status`          | Check if ProxyX is running                      |
-| `stop`            | Stop ProxyX service                             |
-| `version`         | Show ProxyX version                             |
+| Command                | Description                                                     |
+| ---------------------- | --------------------------------------------------------------- |
+| `apply`                | Apply configuration file                                        |
+| `certs`                | **Interactive TLS issuance via Certbot**                        |
+| `configs`              | Show active configurations                                      |
+| `configs -o wide`      | Show full detailed configuration                                |
+| `delete`               | Delete applied configuration (default behavior)                |
+| `delete [name]`        | Delete configuration by its **name**                            |
+| `restart`              | Reload ProxyX configuration                                     |
+| `status`               | Check if ProxyX is running                                      |
+| `stop`                 | Stop ProxyX service                                             |
+| `version`              | Show ProxyX version                                             |
+| `healthcheck`          | Configure health check endpoint (enable/disable/set path/interval) |
 
 
 ---
@@ -252,19 +259,17 @@ ProxyX automatically installs itself as a **Linux system service (`proxyx.servic
 
 ## Architecture Overview
 
-* Go `net/http` server
-* Custom YAML parser
+* Go **fasthttp** server for high-performance, concurrent HTTP handling
+* Custom YAML parser for flexible configuration
 * Reverse proxy engine
 * Health checker
 * Certbot shell integration
 * Middleware pipeline:
-
   * Request Logger
   * Per‑Domain Rate Limiter
   * Load Balancer
   * Health Checker
 
----
 
 ## Use Cases
 
@@ -273,8 +278,6 @@ ProxyX automatically installs itself as a **Linux system service (`proxyx.servic
 * Internal microservice router
 * Development reverse proxy
 * Production HTTPS entrypoint
-
-
 ---
 
 ## Installation
@@ -282,7 +285,6 @@ ProxyX automatically installs itself as a **Linux system service (`proxyx.servic
 For detailed installation instructions, see the [Installation Guide](INSTALL.md).
 
 ---
-
 
 ## Security Features
 
