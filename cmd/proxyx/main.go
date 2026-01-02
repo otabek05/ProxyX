@@ -36,8 +36,6 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-
-
 	srv := proxy.NewServer(serverConfig, proxyConfig)
 	srv.Start()
 }
