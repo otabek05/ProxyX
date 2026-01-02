@@ -44,7 +44,17 @@ func (p *ProxyServer) Start() {
 	go p.runHTTP()
 
 	tlsConfig := &tls.Config{
-		GetCertificate: p.getCertificate,
+		GetCertificate:           p.getCertificate,
+		MinVersion:               tls.VersionTLS12,
+		PreferServerCipherSuites: true,
+
+		CurvePreferences: []tls.CurveID{
+			tls.X25519,
+			tls.CurveP256,
+		},
+
+		NextProtos: []string{"h2", "http/1.1"},
+		SessionTicketsDisabled: false,
 	}
 
 	log.Println("HTTPS Proxy server running on :443")
@@ -54,9 +64,13 @@ func (p *ProxyServer) Start() {
 		ReadTimeout:        p.proxyConfig.HTTPS.ReadTimeout,
 		WriteTimeout:       p.proxyConfig.HTTPS.WriteTimeout,
 		IdleTimeout:        p.proxyConfig.HTTPS.IdleTimeout,
-		ReadBufferSize:     4 * 1024 * 1024,
-		WriteBufferSize:    4 * 1024 * 1024,
+		ReadBufferSize:     32 * 1024,
+		WriteBufferSize:    32 * 1024,
 		MaxRequestBodySize: 1024 * 1024,
+
+		DisableHeaderNamesNormalizing: true,
+		NoDefaultServerHeader:         true,
+		NoDefaultDate:                 true,
 	}
 
 	log.Println("HTTPS Proxy server running on :443")
@@ -116,9 +130,10 @@ func (p *ProxyServer) runHTTP() {
 		ReadTimeout:        p.proxyConfig.HTTP.ReadTimeout,
 		WriteTimeout:       p.proxyConfig.HTTP.WriteTimeout,
 		IdleTimeout:        p.proxyConfig.HTTP.IdleTimeout,
-		ReadBufferSize:     4 * 1024 * 1024,
-		WriteBufferSize:    4 * 1024 * 1024,
+		ReadBufferSize:     32 * 1024,
+		WriteBufferSize:    32 * 1024,
 		MaxRequestBodySize: 1024 * 1024,
+		Concurrency:        0,
 	}
 
 	log.Fatal(server.ListenAndServe(":80"))

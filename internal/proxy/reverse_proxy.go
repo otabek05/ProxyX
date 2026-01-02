@@ -72,20 +72,25 @@ func (p *ProxyServer) reverseProxyxHandler(ctx *fasthttp.RequestCtx, matched *ro
 
 func newUpstreamClient(isTLS bool) *fasthttp.Client {
 	c := &fasthttp.Client{
-		MaxConnsPerHost:     2048,
-		MaxIdleConnDuration: 30 * time.Second,
-		ReadTimeout:         15 * time.Second,
-		WriteTimeout:        15 * time.Second,
+		MaxConnsPerHost:     4096,
+		MaxIdleConnDuration: 10 * time.Second,
+		ReadTimeout:         5 * time.Second,
+		WriteTimeout:        5 * time.Second,
+		DisableHeaderNamesNormalizing: true,
+		NoDefaultUserAgentHeader: true,
+
+		Dial: (&fasthttp.TCPDialer{
+			Concurrency:      4096,
+			DNSCacheDuration: time.Minute,
+		}).Dial,
 	}
 
 	if isTLS {
 		c.TLSConfig = &tls.Config{
 			MinVersion: tls.VersionTLS12,
+			NextProtos: []string{"h2", "http/1.1"},
 		}
 	}
-
-	c.DisableHeaderNamesNormalizing = true
-	c.NoDefaultUserAgentHeader = true
 
 	return c
 }
