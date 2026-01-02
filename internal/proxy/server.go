@@ -46,18 +46,8 @@ func (p *ProxyServer) Start() {
 	tlsConfig := &tls.Config{
 		GetCertificate:           p.getCertificate,
 		MinVersion:               tls.VersionTLS12,
-		PreferServerCipherSuites: true,
-
-		CurvePreferences: []tls.CurveID{
-			tls.X25519,
-			tls.CurveP256,
-		},
-
-		NextProtos: []string{"h2", "http/1.1"},
-		SessionTicketsDisabled: false,
 	}
 
-	log.Println("HTTPS Proxy server running on :443")
 	httpsServer := &fasthttp.Server{
 		Handler:            p.router,
 		TLSConfig:          tlsConfig,

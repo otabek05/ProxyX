@@ -78,17 +78,11 @@ func newUpstreamClient(isTLS bool) *fasthttp.Client {
 		WriteTimeout:        5 * time.Second,
 		DisableHeaderNamesNormalizing: true,
 		NoDefaultUserAgentHeader: true,
-
-		Dial: (&fasthttp.TCPDialer{
-			Concurrency:      4096,
-			DNSCacheDuration: time.Minute,
-		}).Dial,
 	}
 
 	if isTLS {
 		c.TLSConfig = &tls.Config{
 			MinVersion: tls.VersionTLS12,
-			NextProtos: []string{"h2", "http/1.1"},
 		}
 	}
 
