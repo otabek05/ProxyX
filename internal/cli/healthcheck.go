@@ -79,7 +79,6 @@ func (c *CLI) runHealthCheck(cmd *cobra.Command) error {
 	}
 
 	if !updated {
-		fmt.Println("ℹ No changes applied")
 		fmt.Printf("Current settings:\n")
 		fmt.Printf("  Enabled : %v\n", cfg.HealthCheck.Enabled)
 		fmt.Printf("  Path    : %s\n", cfg.HealthCheck.Path)
