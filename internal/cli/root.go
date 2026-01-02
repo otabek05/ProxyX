@@ -39,6 +39,7 @@ func NewCLI(service platform.Service) *CLI {
 	cli.root.AddCommand(cli.restartCmd())
 	cli.root.AddCommand(cli.stopCmd())
 	cli.root.AddCommand(cli.statusCmd())
+	cli.root.AddCommand(cli.versionCmd())
 
 
 	return cli

@@ -2,15 +2,15 @@ apiVersion: proxyx.io/v1
 kind: ProxyConfig
 
 metadata:
-  name: daeryuk-proxy
+  name: proxyx.online
   namespace: default
 
 spec:
   domain: localhost
 
-#  tls:
-#    certFile: /home/unknown/certs/localhost/server.crt
-#    keyFile:  /home/unknown/certs/localhost/server.key
+  tls:
+    certFile: path/to/certs/server.crt
+    keyFile:  path/to/certs/server.key
 
   rateLimit:
     requests: 1000
@@ -29,11 +29,11 @@ spec:
       type: ReverseProxy
       reverseProxy:
         servers:
-          - url: http://localhost:8080
-          - url: http://localhost:8081
+          - url: http://127.0.0.1:8080
+          - url: http://127.0.0.1:8081
 
     - name: websocket-route
       path: /ws/**    
       type: Websocket
       websocket:
-        url: ws://localhost:9000/ws
+        url: ws://127.0.0.1:9000/ws
