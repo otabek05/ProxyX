@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"runtime"
 	"runtime/debug"
 )
 
@@ -25,10 +24,7 @@ func main() {
 		return
 	}
 
-	runtime.GOMAXPROCS(runtime.NumCPU())
-	debug.SetGCPercent(300)
-	
-
+	debug.SetGCPercent(200)
 	proxyConfig, err := config.LoadProxyXConfig()
 	if err != nil {
 		log.Fatalf("Failed to load proxy config: %v", err)

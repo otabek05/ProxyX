@@ -5,26 +5,32 @@ import (
 	"ProxyX/internal/healthchecker"
 	"crypto/tls"
 	"fmt"
-	"github.com/valyala/fasthttp"
-	wsProxy "github.com/yeqown/fasthttp-reverse-proxy/v2"
 	"log"
+	"sync"
+
+	"github.com/valyala/fasthttp"
 )
 
 type ProxyServer struct {
 	router      fasthttp.RequestHandler
 	proxyConfig *common.ProxyConfig
 	config      []common.ServerConfig
-	certCache   map[string]*tls.Certificate
-	proxies     map[string]*fasthttp.Client
-	wsProxies   map[string]*wsProxy.WSReverseProxy
+
+	certCache  sync.Map
+	proxies   sync.Map
+	wsProxies sync.Map
+
+	stats struct {
+		TotalRequests   uint64
+		UpstreamErrors  uint64
+		WebsocketErrors uint64
+	}
 }
 
 func NewServer(config []common.ServerConfig, proxyConfig *common.ProxyConfig) *ProxyServer {
 	p := &ProxyServer{
 		config:      config,
 		proxyConfig: proxyConfig,
-		proxies:     make(map[string]*fasthttp.Client),
-		wsProxies:   make(map[string]*wsProxy.WSReverseProxy),
 	}
 
 	p.router = p.NewRouter(config, p.proxyConfig)
@@ -44,8 +50,8 @@ func (p *ProxyServer) Start() {
 	go p.runHTTP()
 
 	tlsConfig := &tls.Config{
-		GetCertificate:           p.getCertificate,
-		MinVersion:               tls.VersionTLS12,
+		GetCertificate: p.getCertificate,
+		MinVersion:     tls.VersionTLS12,
 	}
 
 	httpsServer := &fasthttp.Server{
@@ -56,11 +62,15 @@ func (p *ProxyServer) Start() {
 		IdleTimeout:        p.proxyConfig.HTTPS.IdleTimeout,
 		ReadBufferSize:     32 * 1024,
 		WriteBufferSize:    32 * 1024,
-		MaxRequestBodySize: 1024 * 1024,
+		MaxRequestBodySize: 1 * 1024 * 1024,
 
 		DisableHeaderNamesNormalizing: true,
+		DisableKeepalive: false,
+		DisablePreParseMultipartForm: true,
 		NoDefaultServerHeader:         true,
 		NoDefaultDate:                 true,
+
+		Concurrency: 262144,
 	}
 
 	log.Println("HTTPS Proxy server running on :443")
@@ -68,7 +78,6 @@ func (p *ProxyServer) Start() {
 }
 
 func (p *ProxyServer) loadAllCertificates() error {
-	p.certCache = make(map[string]*tls.Certificate)
 	for _, srv := range p.config {
 		if srv.Spec.TLS == nil {
 			continue
@@ -80,7 +89,7 @@ func (p *ProxyServer) loadAllCertificates() error {
 			continue
 		}
 
-		p.certCache[srv.Spec.Domain] = &cert
+		p.certCache.Store(srv.Spec.Domain, &cert)
 		log.Println("Loaded TLS for:", srv.Spec.Domain)
 	}
 
@@ -90,8 +99,8 @@ func (p *ProxyServer) loadAllCertificates() error {
 func (p *ProxyServer) getCertificate(tslHello *tls.ClientHelloInfo) (*tls.Certificate, error) {
 	domain := tslHello.ServerName
 
-	if cert, ok := p.certCache[domain]; ok {
-		return cert, nil
+	if certAny, ok := p.certCache.Load(domain); ok {
+		return certAny.(*tls.Certificate), nil
 	}
 
 	return nil, fmt.Errorf("no TLS cert for domain: %s", domain)
@@ -105,7 +114,7 @@ func (p *ProxyServer) runHTTP() {
 			return
 		}
 
-		if _, ok := p.certCache[string(ctx.Host())]; ok {
+		if _, ok := p.certCache.Load(string(ctx.Host())); ok {
 			target := "https://" + string(ctx.Host()) + string(ctx.RequestURI())
 			ctx.Redirect(target, fasthttp.StatusMovedPermanently)
 			return
