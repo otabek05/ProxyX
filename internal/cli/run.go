@@ -4,16 +4,22 @@ import (
 	"ProxyX/internal/proxy"
 	"ProxyX/pkg/config"
 	"log"
+	"net"
 
 	"github.com/spf13/cobra"
 )
 
-func (c *CLI) runCmd() *cobra.Command {
+func (c *CLI) startCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "start",
 		Short: "Runs proxyx in the background if not running",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			
+		Run: func(cmd *cobra.Command, args []string)  {
+
+			if IsServerRunning() {
+				log.Println("ProxyX server is already running.")
+				return 
+			}
+
 			proxyConfig, err := config.LoadProxyXConfig()
 			if err != nil {
 				log.Fatalf("Failed to load proxy config: %v", err)
@@ -25,8 +31,19 @@ func (c *CLI) runCmd() *cobra.Command {
 			}
 
 			srv := proxy.NewServer(serverConfig, proxyConfig)
-			return srv.Start()
+			srv.Start()
 		},
 	}
 
+}
+
+
+func IsServerRunning() bool {
+	conn, err := net.Dial("tcp", "127.0.0.1:443")
+	if err != nil {
+		return false 
+	}
+
+	conn.Close()
+	return true
 }
