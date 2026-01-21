@@ -40,6 +40,7 @@ func NewCLI(service platform.Service) *CLI {
 	cli.root.AddCommand(cli.stopCmd())
 	cli.root.AddCommand(cli.statusCmd())
 	cli.root.AddCommand(cli.versionCmd())
+	cli.root.AddCommand(cli.runCmd())
 	
 	return cli
 
@@ -50,4 +51,9 @@ func (c *CLI) Execute() {
 		fmt.Println(err)
 		os.Exit(1)
 	}
+}
+
+
+func (c *CLI) Help() {
+	c.root.Help()
 }

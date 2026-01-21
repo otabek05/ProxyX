@@ -38,9 +38,9 @@ func NewServer(config []common.ServerConfig, proxyConfig *common.ProxyConfig) *P
 	return p
 }
 
-func (p *ProxyServer) Start() {
+func (p *ProxyServer) Start() error  {
 	if err := p.loadAllCertificates(); err != nil {
-		log.Fatal(err)
+	   return err
 	}
 
 	if p.proxyConfig.HealthCheck.Enabled {
@@ -74,7 +74,7 @@ func (p *ProxyServer) Start() {
 	}
 
 	log.Println("HTTPS Proxy server running on :443")
-	log.Fatal(httpsServer.ListenAndServeTLS(":443", "", ""))
+	return httpsServer.ListenAndServeTLS(":443", "", "")
 }
 
 func (p *ProxyServer) loadAllCertificates() error {
