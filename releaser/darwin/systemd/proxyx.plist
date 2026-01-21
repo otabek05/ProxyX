@@ -8,6 +8,7 @@
     <key>ProgramArguments</key>
     <array>
         <string>/usr/local/bin/proxyx</string>
+        <string>run</string>
     </array>
 
     <key>RunAtLoad</key>

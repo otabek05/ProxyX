@@ -3,7 +3,7 @@ Description=ProxyX Reverse Proxy Service
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/proxyx 
+ExecStart=/usr/local/bin/proxyx run
 ExecReload=/bin/kill -HUP %MAINPID
 Restart=on-failure
 User=root
