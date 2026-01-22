@@ -9,25 +9,32 @@ import (
 )
 
 type CLI struct {
-	Service platform.Service
-	root    *cobra.Command
+	Service       platform.Service
+	root          *cobra.Command
 	serviceConfig string
-	proxyXConfig string  
-
+	proxyXConfig  string
 }
 
 func NewCLI(service platform.Service) *CLI {
 
 	var rootCmd = &cobra.Command{
 		Use:   "proxyx",
-		Short: "ProxyX CLI too and server",
+		Short: "🚀 ProxyX — Advanced proxy management CLI",
+		Long: `🚀 ProxyX is a powerful and flexible command-line tool for managing proxies, similar to Nginx but with extended capabilities.
+
+With ProxyX, you can:
+- Effortlessly manage proxy configurations and SSL/TLS certificates
+- Monitor service health and status
+- Start, stop, and restart proxy instances
+- Gain full control over your proxy environment with a simple CLI
+
+Designed for developers and sysadmins who need more than just a reverse proxy, ProxyX combines performance, flexibility, and ease-of-use in one tool.`,
 	}
 
 	cli := &CLI{
-		Service: service,
-		root: rootCmd,
-		serviceConfig:  "/etc/proxyx/conf.d",
-
+		Service:       service,
+		root:          rootCmd,
+		serviceConfig: "/etc/proxyx/conf.d",
 	}
 
 	cli.root.AddCommand(cli.applyConfigCmd())
@@ -41,7 +48,7 @@ func NewCLI(service platform.Service) *CLI {
 	cli.root.AddCommand(cli.statusCmd())
 	cli.root.AddCommand(cli.versionCmd())
 	cli.root.AddCommand(cli.startCmd())
-	
+
 	return cli
 
 }
@@ -52,7 +59,6 @@ func (c *CLI) Execute() {
 		os.Exit(1)
 	}
 }
-
 
 func (c *CLI) Help() {
 	c.root.Help()

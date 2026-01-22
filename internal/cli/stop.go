@@ -7,11 +7,10 @@ import (
 func (c *CLI) stopCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "stop",
-		Short: "Stops running proxyx service",
-		RunE: func(cmd *cobra.Command, args []string) error  {
+		Short: "🛑 Stop the running ProxyX service",
+		RunE: func(cmd *cobra.Command, args []string) error {
 			return c.Service.Stop()
 		},
 	}
 
 }
-

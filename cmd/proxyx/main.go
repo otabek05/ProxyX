@@ -16,13 +16,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
+	
 	cmd := cli.NewCLI(service)
-	if len(os.Args) == 1 {
-		cmd.Help()
-		return
-	}
-
 	cmd.Execute()
 }
 
