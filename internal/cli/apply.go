@@ -12,26 +12,15 @@ import (
 
 
 func (c *CLI) applyConfigCmd() *cobra.Command {
-	var applyFile string
-
-	cmd := &cobra.Command{
+	return  &cobra.Command{
 		Use:   "apply",
 		Short: "⚡ Apply a YAML configuration to ProxyX",
+		Args: cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string)error {
-		 
-		  return c.runApply(applyFile)
+		 filePath := args[0]
+		  return c.runApply(filePath)
 		},
 	}
-
-	cmd.Flags().StringVarP(
-		&applyFile,
-		"file",
-		"f",
-		"",
-		"Path to config file to add",
-	)
-
-	return cmd
 }
 
 func (c *CLI) runApply(file string) error {

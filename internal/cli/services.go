@@ -18,7 +18,7 @@ import (
 
 func (c *CLI) configCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "configs",
+		Use:   "config",
 		Short: "⚙️ Display current proxy configurations",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			output, _ := cmd.Flags().GetString("output")
@@ -38,7 +38,7 @@ func (c *CLI) runConfigs(output string) error {
 			return err
 		}
 		if len(files) == 0 {
-			fmt.Println("No configuration files found.")
+			fmt.Println("ℹ️ No configuration files available.")
 			return nil
 		}
 
