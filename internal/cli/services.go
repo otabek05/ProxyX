@@ -19,7 +19,7 @@ import (
 func (c *CLI) configCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "configs",
-		Short: "Print configured proxy configs",
+		Short: "⚙️ Display current proxy configurations",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			output, _ := cmd.Flags().GetString("output")
 			return c.runConfigs(output)

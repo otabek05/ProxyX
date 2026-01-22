@@ -7,7 +7,7 @@ import (
 func (c *CLI) statusCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "status",
-		Short: "Show ProxyX runtime status and system metrics",
+		Short: "📊 Display ProxyX runtime status",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return c.Service.Status()
 		},

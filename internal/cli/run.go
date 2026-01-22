@@ -12,7 +12,7 @@ import (
 func (c *CLI) startCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "start",
-		Short: "Runs proxyx in the background if not running",
+		Short: "▶️ Start the ProxyX service",
 		Run: func(cmd *cobra.Command, args []string)  {
 
 			if IsServerRunning() {

@@ -18,8 +18,10 @@ var (
 func (c *CLI) healthCheckCmd() *cobra.Command {
 	healthCheckCmd := &cobra.Command{
 		Use:   "healthcheck",
-		Short: "Configure health check settings",
-		Long: `Enable, disable, or configure the health check endpoint.
+		Short: "❤️ Manage ProxyX health check settings",
+		Long: `Configure ProxyX health checks to monitor service availability.
+
+You can enable, disable, or customize the health check endpoint:
 
 Examples:
   proxyx healthcheck --enable

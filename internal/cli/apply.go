@@ -16,8 +16,9 @@ func (c *CLI) applyConfigCmd() *cobra.Command {
 
 	cmd := &cobra.Command{
 		Use:   "apply",
-		Short: "Apply configuration file to ProxyX",
+		Short: "⚡ Apply a YAML configuration to ProxyX",
 		RunE: func(cmd *cobra.Command, args []string)error {
+		 
 		  return c.runApply(applyFile)
 		},
 	}

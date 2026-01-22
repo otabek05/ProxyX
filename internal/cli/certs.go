@@ -19,7 +19,7 @@ import (
 func (c *CLI) certCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "cert",
-		Short: "Issue TLS certificate for a domain using certbot",
+		Short: "🔐 Manage TLS certificates with Certbot",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			files, err := filepath.Glob(filepath.Join(c.serviceConfig, "*.yaml"))
 			if err != nil || len(files) == 0 {
