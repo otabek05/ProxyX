@@ -1,131 +1,134 @@
-## 🚀 ProxyX
+# ProxyX
 
-ProxyX is a high-performance, configuration-driven
-reverse proxy and static file server written in Go.
+ProxyX is a high-performance, configuration-driven reverse proxy and
+static file server written in Go, inspired by Nginx.
 
-Inspired by Nginx, ProxyX uses fasthttp instead of
-Go’s standard net/http to achieve maximum performance.
+It uses fasthttp instead of Go’s standard net/http to deliver
+high concurrency and low latency. 🚀
 
 
 ## ✨ Features
 
-- 🔁 Reverse Proxy
-- 📁 Static File Serving
-- 🔐 TLS / HTTPS with Certbot
-- ⚖️ Load Balancing (Round-Robin)
-- ❤️ Health Checking
-- 🚦 Per-Domain Rate Limiting
-- 📄 Declarative YAML Configuration
-- 🧰 Powerful Interactive CLI Tool
+- Reverse Proxy
+- Static File Serving
+- TLS / HTTPS with Certbot
+- Load Balancing (Round-Robin)
+- Health Checking
+- Per-Domain Rate Limiting
+- Declarative YAML Configuration
+- Interactive CLI Tool
 
 
-## 📦 ProxyX Installation Guide
+## 📦 Installation Guide
 
 ProxyX supports the following platforms:
 
-- 🐧 Linux
+- Linux
   - Debian-based (.deb)
   - RPM-based (.rpm)
-- 🍎 macOS (Darwin)
+- macOS (Darwin)
 
-📖 For detailed installation instructions:
-doc/INSTALL.md
-
-
-## ⚙️ ProxyX Configuration Guide
-
-ProxyX uses a Kubernetes-style YAML configuration
-to define:
-
-- 🌍 Domains
-- 🔐 TLS settings
-- 🚦 Rate limits
-- 🔀 Routing rules
-
-📖 Full documentation:
-doc/CONFIGURATION.md
+For detailed installation steps, see:
+Installation Guide → doc/INSTALL.md
 
 
-## 🧰 ProxyX CLI Tool
+## ⚙️ Configuration Guide
 
-ProxyX includes a full lifecycle management CLI
-to manage configurations, services, and TLS.
+ProxyX uses a Kubernetes-style YAML configuration format to define:
+
+- Domains
+- TLS settings
+- Rate limits
+- Routing rules
+
+For full configuration examples and explanations, see:
+Configuration Guide → doc/CONFIGURATION.md
+
+
+## 🧰 CLI Tool
+
+ProxyX includes a full lifecycle management CLI for:
+
+- Applying and deleting configs
+- Managing TLS certificates
+- Controlling the ProxyX service
 
 📖 Full command reference:
-doc/CLI.md
+CLI Tool Guide → doc/CLI.md
 
 
-## 🔐 ProxyX TLS Configuration
+## 🔐 TLS Configuration
 
-ProxyX integrates with Certbot to automatically
-issue and manage Let’s Encrypt TLS certificates.
+ProxyX integrates with Certbot to automatically issue and manage
+Let’s Encrypt TLS certificates.
 
-📖 TLS setup guide:
-doc/TLS.md
+- HTTPS for Static, ReverseProxy, and WebSocket routes
+- Multiple domains supported
+- Automatic certificate renewal
+
+📖 For detailed instructions, see:
+TLS Configuration Guide → doc/TLS.md
 
 
 ## 🖥️ System Service & Ports
 
-ProxyX installs itself as a Linux system service
-called:
+ProxyX installs itself as a system service:
 
-- proxyx.service
+  proxyx.service
 
 It is designed to run as a production-grade daemon.
 
 
 ### ✅ Service Features
 
-- 🔄 Runs as a system service
-- 🚀 Starts automatically on boot
-- ♻️ Restarts automatically after shutdown
-- 🛑 Restarts automatically on crash or failure
+- Starts automatically on system boot
+- Restarts automatically after shutdown
+- Restarts on crash or failure
 
 
 ### 🌐 Network Ports
 
-- 🌍 Port 80  → HTTP traffic
-- 🔐 Port 443 → HTTPS (TLS)
+- Port 80  → HTTP
+- Port 443 → HTTPS (TLS)
 
-⚠️ Root (sudo) access is required
-to bind to ports 80 and 443.
+⚠️ Root (sudo) access is required to bind to ports 80 and 443.
 
 
 ## 🧠 Architecture Overview
 
-- ⚡ Go fasthttp server for high concurrency
-- 📄 Custom YAML configuration parser
-- 🔁 Reverse proxy engine
-- ❤️ Health checker
-- 🔐 Certbot shell integration
+- fasthttp server for high-performance HTTP handling
+- Custom YAML configuration parser
+- Reverse proxy engine
+- Health checking subsystem
+- Certbot shell integration
 
 Middleware pipeline:
-- 📝 Request Logger
-- 🚦 Per-Domain Rate Limiter
-- ⚖️ Load Balancer
-- ❤️ Health Checker
+- Request Logger
+- Per-Domain Rate Limiter
+- Load Balancer
+- Health Checker
 
 
 ## 🎯 Use Cases
 
-- 🚪 API Gateway
-- 🌐 Static website hosting
-- 🔀 Internal microservice routing
-- 🧪 Development reverse proxy
-- 🏭 Production HTTPS entrypoint
+- API Gateway
+- Static website hosting
+- Internal microservice router
+- Development reverse proxy
+- Production HTTPS entrypoint
 
 
-## 🛡️ Security Features
+## 🔒 Security Features
 
-- 🔐 HTTPS with Let’s Encrypt
-- 🚦 Per-domain rate limiting
-- ❤️ Backend health validation
-- 🔒 Mandatory TLS for production
+- HTTPS with Let’s Encrypt
+- Per-domain rate limiting
+- Backend health validation
+- TLS-first production design
 
 
-## 👤 Author
+## 👨‍💻 Author
 
-Developed by Otabek
+Developed by **Otabek**  
 Go Backend Developer
 
 
