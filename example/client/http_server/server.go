@@ -17,12 +17,12 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 	log.Printf(
-		"Request from proxy | remote=%s | host=%s | proto=%s | xfp=%s\n",
+		"remote=%s | method=%s | url=%s\n",
 		r.RemoteAddr,
-		r.Host,
-		r.Proto,
-		r.Header.Get("X-Forwarded-Proto"),
+		r.Method,
+		r.URL.String(),
 	)
+
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

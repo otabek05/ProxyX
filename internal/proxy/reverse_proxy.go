@@ -53,7 +53,8 @@ func (p *ProxyServer) reverseProxyxHandler(ctx *fasthttp.RequestCtx, matched *ro
 	uri.SetPathBytes(ctx.Path())
 	uri.SetQueryStringBytes(ctx.QueryArgs().QueryString())
 
-	req.Header.Set("X-Forwarded-For", ctx.RemoteAddr().String())
+	//req.Header.Set("X-Forwarded-For", ctx.RemoteAddr().String())
+	appendXForwardedFor(ctx, req)
 	req.Header.Set("X-Forwarded-Host", string(ctx.Host()))
 	req.Header.Set("X-Forwarded-Proto", map[bool]string{
 		true:  "https",
@@ -92,4 +93,17 @@ func newUpstreamClient(target *url.URL) *fasthttp.HostClient {
 	}
 
 	return c
+}
+
+
+func appendXForwardedFor(ctx *fasthttp.RequestCtx, req *fasthttp.Request) {
+	ip := ctx.RemoteIP().String()
+
+	if prior := req.Header.Peek("X-Forwarded-For"); len(prior) > 0 {
+		req.Header.SetBytesV("X-Forwarded-For",
+			append(prior, []byte(", "+ip)...),
+		)
+	} else {
+		req.Header.Set("X-Forwarded-For", ip)
+	}
 }
