@@ -1,108 +1,133 @@
-# ProxyX
+## 🚀 ProxyX
 
-ProxyX is a high‑performance, configuration‑driven reverse proxy and static file server written in **Go**, inspired by **Nginx**. It uses `fasthttp` for maximum performance instead of Go’s standard `net/http` and provides:
+ProxyX is a high-performance, configuration-driven
+reverse proxy and static file server written in Go.
 
-* ✅ Reverse Proxy
-* ✅ Static File Serving
-* ✅ TLS/HTTPS with Certbot
-* ✅ Load Balancing (Round‑Robin)
-* ✅ Health Checking
-* ✅ **Per‑Domain Rate Limiting**
-* ✅ Declarative YAML Configuration
-* ✅ Powerful Interactive CLI Tool
-
----
+Inspired by Nginx, ProxyX uses fasthttp instead of
+Go’s standard net/http to achieve maximum performance.
 
 
-## ProxyX Installation Guide
+## ✨ Features
+
+- 🔁 Reverse Proxy
+- 📁 Static File Serving
+- 🔐 TLS / HTTPS with Certbot
+- ⚖️ Load Balancing (Round-Robin)
+- ❤️ Health Checking
+- 🚦 Per-Domain Rate Limiting
+- 📄 Declarative YAML Configuration
+- 🧰 Powerful Interactive CLI Tool
+
+
+## 📦 ProxyX Installation Guide
 
 ProxyX supports the following platforms:
 
-- **Linux**: Debian-based (`.deb`) and RPM-based (`.rpm`) distributions  
-- **Darwin**: macOS
+- 🐧 Linux
+  - Debian-based (.deb)
+  - RPM-based (.rpm)
+- 🍎 macOS (Darwin)
 
-For detailed installation instructions, see the [Installation Guide](doc/INSTALL.md).
+📖 For detailed installation instructions:
+doc/INSTALL.md
 
----
 
-## ProxyX Configuration Guide
+## ⚙️ ProxyX Configuration Guide
 
-ProxyX uses a Kubernetes-style YAML configuration format to define domains, TLS, rate limits, and routes declaratively.
-For full detailed instructions and usage examples, see: [Configuration Guide](doc/CONFIGURATION.md)
+ProxyX uses a Kubernetes-style YAML configuration
+to define:
 
----
+- 🌍 Domains
+- 🔐 TLS settings
+- 🚦 Rate limits
+- 🔀 Routing rules
 
-## ProxyX CLI Tool
+📖 Full documentation:
+doc/CONFIGURATION.md
 
-ProxyX includes a full lifecycle management CLI.  
-For full command reference and usage examples, see: [CLI Tool Guide](doc/CLI.md)
 
----
+## 🧰 ProxyX CLI Tool
 
-## ProxyX TLS Configuration Guide
+ProxyX includes a full lifecycle management CLI
+to manage configurations, services, and TLS.
 
-ProxyX integrates with **Certbot** to automatically issue and manage Let's Encrypt TLS certificates.
-For detailed instructions, see: [TLS Configuration Guide](doc/TLS.md)
+📖 Full command reference:
+doc/CLI.md
 
----
 
-## System Service & Ports
+## 🔐 ProxyX TLS Configuration
 
-ProxyX automatically installs itself as a **Linux system service (`proxyx.service`)** and is designed to run as a **production-grade daemon**.
+ProxyX integrates with Certbot to automatically
+issue and manage Let’s Encrypt TLS certificates.
+
+📖 TLS setup guide:
+doc/TLS.md
+
+
+## 🖥️ System Service & Ports
+
+ProxyX installs itself as a Linux system service
+called:
+
+- proxyx.service
+
+It is designed to run as a production-grade daemon.
+
 
 ### ✅ Service Features
 
-* ✅ Runs as `proxyx` system service
-* ✅ Automatically starts on system boot
-* ✅ Automatically restarts if the server turns off/on
-* ✅ Automatically restarts on crash or failure
-
-### ✅ Network Ports
-
-* ✅ **Port 80** → HTTP traffic
-* ✅ **Port 443** → HTTPS (TLS via Certbot)
-
-> ⚠️ ProxyX requires **root (sudo)** access to bind to ports **80 and 443**.
-
----
-
-## Architecture Overview
-
-* Go **fasthttp** server for high-performance, concurrent HTTP handling
-* Custom YAML parser for flexible configuration
-* Reverse proxy engine
-* Health checker
-* Certbot shell integration
-* Middleware pipeline:
-  * Request Logger
-  * Per‑Domain Rate Limiter
-  * Load Balancer
-  * Health Checker
+- 🔄 Runs as a system service
+- 🚀 Starts automatically on boot
+- ♻️ Restarts automatically after shutdown
+- 🛑 Restarts automatically on crash or failure
 
 
-## Use Cases
+### 🌐 Network Ports
 
-* API Gateway
-* Static website hosting
-* Internal microservice router
-* Development reverse proxy
-* Production HTTPS entrypoint
----
+- 🌍 Port 80  → HTTP traffic
+- 🔐 Port 443 → HTTPS (TLS)
 
-## Security Features
+⚠️ Root (sudo) access is required
+to bind to ports 80 and 443.
 
-* HTTPS with Let's Encrypt
-* Per‑domain rate limiting
-* Backend health validation
-* Mandatory TLS for production
 
----
+## 🧠 Architecture Overview
 
-## Author
+- ⚡ Go fasthttp server for high concurrency
+- 📄 Custom YAML configuration parser
+- 🔁 Reverse proxy engine
+- ❤️ Health checker
+- 🔐 Certbot shell integration
 
-Developed by **Otabek** — Go Backend Developer
+Middleware pipeline:
+- 📝 Request Logger
+- 🚦 Per-Domain Rate Limiter
+- ⚖️ Load Balancer
+- ❤️ Health Checker
 
----
+
+## 🎯 Use Cases
+
+- 🚪 API Gateway
+- 🌐 Static website hosting
+- 🔀 Internal microservice routing
+- 🧪 Development reverse proxy
+- 🏭 Production HTTPS entrypoint
+
+
+## 🛡️ Security Features
+
+- 🔐 HTTPS with Let’s Encrypt
+- 🚦 Per-domain rate limiting
+- ❤️ Backend health validation
+- 🔒 Mandatory TLS for production
+
+
+## 👤 Author
+
+Developed by Otabek
+Go Backend Developer
+
 
 ## 📄 License
 

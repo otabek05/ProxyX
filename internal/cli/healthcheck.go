@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"ProxyX/pkg/config"
+	"ProxyX/internal/pkg/config"
 	"fmt"
 	"time"
 

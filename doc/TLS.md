@@ -1,46 +1,78 @@
-## TLS & HTTPS with Certbot
+## 🔐 TLS & HTTPS with Certbot
 
-ProxyX integrates with **Certbot** to issue and manage **Let's Encrypt TLS certificates** for your domains.  
-It provides HTTPS support for **Static, ReverseProxy, and WebSocket routes**.
+ProxyX integrates with Certbot to issue and manage
+Let’s Encrypt TLS certificates automatically.
 
----
+HTTPS is supported for:
+- 📁 Static routes
+- 🔁 Reverse Proxy routes
+- 🔌 WebSocket routes
 
-### ✅ Requirements
 
-Before using TLS, you must install Certbot:
+## ✅ Requirements
 
-```bash
-# RHEL / CentOS / Amazon Linux
+Before enabling TLS, Certbot must be installed.
+
+📦 RHEL / CentOS / Amazon Linux
 sudo dnf install certbot
 
-# Ubuntu / Debian
+📦 Ubuntu / Debian
 sudo apt install certbot
 
-```
+⚠️ Make sure:
+- 🌐 The server has public internet access
+- 🌍 The domain DNS record points to this server
 
-Ensure your system can reach the public internet and that the domain points to this server.
 
-### ✅Certificate Issuance
+## 📜 Certificate Issuance
 
-To issue a certificate for a domain interactively:
+ProxyX offers multiple ways to manage certificates.
 
-```bash
+
+### 🧭 Interactive Mode (Recommended)
+
 sudo proxyx cert
-```
 
-ProxyX will prompt for:
-  * Domain Select [number]
-  * Email Address for Let's encrypt registration
-
-Afterwards, ProxyX will:
-  * Request the certificate
-  * Automatically update your configuration to enable HTTPS
+You will be prompted to:
+- 🔢 Select a domain from existing configurations
+- 📧 Enter an email address for Let’s Encrypt
 
 
----
+### 🌐 Issue Certificate for a Domain
 
-## Notes & Best Practices
- * Ports **80**(HTTP) and **443** (HTTPS) must be open for issuance and renewal.
- * Use a fixed domain for TLS to avoid Let's Encrypt validation errors.
- * ProxyX supports multiple domains, each with its own certificate.
- * Certificates issued by Let's Encrypt are trusted by all major browsers.
+sudo proxyx cert example.com
+
+Notes:
+- ✔️ Domain must exist in ProxyX configuration
+- 🔁 Stored email will be reused automatically
+
+
+### ♻️ Renew Certificate
+
+sudo proxyx cert renew example.com
+
+Notes:
+- 🔄 Uses Certbot renewal flow
+- ⚙️ Configuration is updated automatically
+
+
+## ⚙️ Automatic Actions by ProxyX
+
+After issuing or renewing a certificate, ProxyX will:
+
+- 🔐 Request or renew the TLS certificate
+- 📝 Update the configuration with:
+  - certFile
+  - keyFile
+- 🔄 Restart the ProxyX service
+
+🚫 No manual HTTPS configuration required.
+
+
+## 📌 Notes & Best Practices
+
+- 🔓 Ports 80 (HTTP) and 443 (HTTPS) must be open
+- 📍 Use stable, public domains to avoid validation errors
+- 🧩 Each domain has its own certificate
+- 🌍 Certificates are trusted by all major browsers
+- 💾 Email address is saved and reused automatically

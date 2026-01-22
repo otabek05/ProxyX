@@ -2,7 +2,7 @@ package cli
 
 import (
 	"ProxyX/internal/proxy"
-	"ProxyX/pkg/config"
+	"ProxyX/internal/pkg/config"
 	"log"
 	"net"
 

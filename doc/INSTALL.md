@@ -12,14 +12,14 @@ Linux distributions.
 #### AMD64 (x86_64)
 
 ``` bash
-wget https://github.com/otabek05/ProxyX/releases/download/v0.1.2/proxyx_0.1.2_linux_amd64.deb
+wget https://github.com/otabek05/ProxyX/releases/download/v0.1.2/proxyx_0.1.4_linux_amd64.deb
 sudo apt install ./proxyx_0.1.2_linux_amd64.deb
 ```
 
 #### ARM64
 
 ``` bash
-wget https://github.com/otabek05/ProxyX/releases/download/v0.1.2/proxyx_0.1.2_linux_arm64.deb
+wget https://github.com/otabek05/ProxyX/releases/download/v0.1.2/proxyx_0.1.4_linux_arm64.deb
 sudo apt install ./proxyx_0.1.2_linux_arm64.deb
 ```
 
@@ -30,14 +30,14 @@ sudo apt install ./proxyx_0.1.2_linux_arm64.deb
 #### AMD64 (x86_64)
 
 ``` bash
-wget https://github.com/otabek05/ProxyX/releases/download/v0.1.2/proxyx_0.1.2_linux_amd64.rpm
+wget https://github.com/otabek05/ProxyX/releases/download/v0.1.2/proxyx_0.1.4_linux_amd64.rpm
 sudo dnf install ./proxyx_0.1.2_linux_amd64.rpm
 ```
 
 #### ARM64
 
 ``` bash
-wget https://github.com/otabek05/ProxyX/releases/download/v0.1.2/proxyx_0.1.2_linux_arm64.rpm
+wget https://github.com/otabek05/ProxyX/releases/download/v0.1.2/proxyx_0.1.4_linux_arm64.rpm
 sudo dnf install ./proxyx_0.1.2_linux_arm64.rpm
 ```
 

@@ -10,9 +10,9 @@ TLS certificates, and service state.
 | Command | Description |
 |-------|-------------|
 | `apply` | Apply a configuration file |
-| `certs` | Interactive TLS certificate issuance via Certbot |
-| `configs` | Show active configurations |
-| `configs -o wide` | Show full detailed configuration view |
+| `cert` | Interactive TLS certificate issuance via Certbot |
+| `config` | Show active configurations |
+| `config -o wide` | Show full detailed configuration view |
 | `delete` | Delete applied configuration (default behavior) |
 | `delete [name]` | Delete configuration by its **name** |
 | `restart` | Reload ProxyX configuration |
@@ -27,7 +27,7 @@ TLS certificates, and service state.
 ### ✅ Basic CLI Usage
 
 ```bash
-sudo proxyx apply -f path/to/file
+sudo proxyx apply  path/to/file
 sudo proxyx configs
 sudo proxyx configs -o wide
 sudo proxyx restart

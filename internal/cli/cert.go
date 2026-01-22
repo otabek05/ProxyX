@@ -2,8 +2,6 @@ package cli
 
 import (
 	"ProxyX/internal/common"
-	"ProxyX/internal/utils"
-	"ProxyX/pkg/config"
 	"bufio"
 	"errors"
 	"fmt"
@@ -12,6 +10,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"ProxyX/internal/pkg/config"
+	"ProxyX/internal/pkg/utils"
+
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
