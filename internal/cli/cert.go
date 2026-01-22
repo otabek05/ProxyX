@@ -19,69 +19,39 @@ import (
 
 func (c *CLI) certCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "cert [domain |renew]",
+		Use:   "cert [domain | renew]",
 		Short: "🔐 Manage TLS certificates with Certbot",
 		Args:  cobra.MaximumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
-			files, err := filepath.Glob(filepath.Join(c.serviceConfig, "*.yaml"))
-			if err != nil || len(files) == 0 {
-				fmt.Println("⚠️ No configuration files found")
-				return
+			if err := c.runCert(args); err != nil {
+				fmt.Println(err)
 			}
-
-			if len(args) == 0 {
-				c.runCertInteractive(files)
-				return
-			}
-
-			// 🔹 Renew mode
-			if args[0] == "renew" {
-				if len(args) != 2 {
-					fmt.Println("❌ Domain required: proxyx cert renew example.com")
-					return
-				}
-
-				c.runRenew(args[1], files)
-				return
-			}
-
-			c.runIssueCert(args[0], files)
-
-			/*
-				domainMap := make(map[int]string)
-				c.printDomains(files, domainMap)
-				if len(domainMap) == 0 {
-					return errors.New("No domains found in configs.")
-				}
-
-				reader := bufio.NewReader(os.Stdin)
-				domain, err := c.requestDomain(reader, domainMap)
-				if err != nil {
-					return err
-				}
-
-				email, err := c.requestEmail(reader)
-				if err != nil {
-					return err
-				}
-
-				fmt.Println("\nRequesting certificate for:", domain)
-				c.Service.Stop()
-
-				if err := c.requestCert(domain, email); err != nil {
-					return fmt.Errorf("Certbot failed: %v", err)
-				}
-
-				fmt.Println("\nCertificate issued successfully!")
-				c.applyCerts(&domain, files)
-
-				fmt.Println("\nReloading ProxyX...")
-				return c.Service.Restart()
-
-			*/
 		},
 	}
 }
+
+
+
+func (c *CLI) runCert( args []string) error {
+	files, err := filepath.Glob(filepath.Join(c.serviceConfig, "*.yaml"))
+	if err != nil || len(files) == 0 {
+		return errors.New("⚠️ no configuration files found")
+	}
+
+	if len(args) == 0 {
+		return c.runCertInteractive(files)
+	}
+
+	if args[0] == "renew" {
+		if len(args) != 2 {
+			return errors.New("❌ usage: proxyx cert renew example.com")
+		}
+		return c.runRenew(args[1], files)
+	}
+
+	return c.runIssueCert(args[0], files)
+}
+
 
 func (c *CLI) domainExists(domain string, files []string) bool {
 	for _, file := range files {
@@ -222,31 +192,6 @@ func (c *CLI) requestDomain(reader *bufio.Reader, domainMap map[int]string) (str
 	}
 }
 
-/*
-	func (c *CLI) requestEmail(reader *bufio.Reader) (string, error) {
-		for {
-			fmt.Print("Enter email for Let's Encrypt (q to exit): ")
-
-			input, err := reader.ReadString('\n')
-			if err != nil {
-				return "", fmt.Errorf("input error: %w", err)
-			}
-
-			input = strings.TrimSpace(input)
-
-			if strings.EqualFold(input, "q") {
-				return "", fmt.Errorf("user exited")
-			}
-
-			if utils.IsValidEmail(input) {
-				return input, nil
-			}
-
-			fmt.Printf("Invalid email: %s. Please enter a valid email.\n", input)
-			fmt.Println("Enter 'q' to exit.")
-		}
-	}
-*/
 func (c *CLI) applyCerts(domain string, files []string) error {
 	certPath := "/etc/letsencrypt/live/" + domain + "/fullchain.pem"
 	keyPath := "/etc/letsencrypt/live/" + domain + "/privkey.pem"

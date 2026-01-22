@@ -2,10 +2,11 @@ package cli
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/spf13/cobra"
 )
 
 func (c *CLI) deleteCmd() *cobra.Command {
@@ -16,23 +17,23 @@ func (c *CLI) deleteCmd() *cobra.Command {
      sudo proxyx delete local-proxy
      sudo proxyx delete my-api
   `,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return c.runDeleteFile(args[0])
+		Run: func(cmd *cobra.Command, args []string)  {
+			 c.runDeleteFile(args[0])
 		},
 	}
 }
-
-func (c *CLI) runDeleteFile(name string) error {
+func (c *CLI) runDeleteFile(name string) {
 	files, err := os.ReadDir(c.serviceConfig)
 	if err != nil {
-		return fmt.Errorf("failed to read config directory: %v", err)
+		fmt.Println("❌ Failed to read config directory:", err)
+		return
 	}
 
 	var matchedFile string
 	for _, file := range files {
 		if strings.HasSuffix(file.Name(), ".yaml") || strings.HasSuffix(file.Name(), ".yml") {
-
 			fullPath := filepath.Join(c.serviceConfig, file.Name())
+
 			content, err := os.ReadFile(fullPath)
 			if err != nil {
 				continue
@@ -46,14 +47,22 @@ func (c *CLI) runDeleteFile(name string) error {
 	}
 
 	if matchedFile == "" {
-		return fmt.Errorf("no configuration found with name: %s", name)
+		fmt.Printf("❌ Configuration '%s' not found\n", name)
+		return
 	}
 
 	if err := os.Remove(matchedFile); err != nil {
-		return fmt.Errorf("failed to delete: %v", err)
+		fmt.Println("❌ Failed to delete configuration:", err)
+		return
 	}
 
-	fmt.Printf("Deleted configuration '%s' (file: %s)\n", name, filepath.Base(matchedFile))
-	return c.Service.Restart()
+	fmt.Printf("🗑️ Configuration '%s' deleted (%s)\n", name, filepath.Base(matchedFile))
+	fmt.Println("🔄 Restarting ProxyX service...")
 
+	if err := c.Service.Restart(); err != nil {
+		fmt.Println("❌ Failed to restart ProxyX:", err)
+		return
+	}
+
+	fmt.Println("✅ ProxyX restarted successfully")
 }

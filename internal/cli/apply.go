@@ -16,41 +16,49 @@ func (c *CLI) applyConfigCmd() *cobra.Command {
 		Use:   "apply",
 		Short: "⚡ Apply a YAML configuration to ProxyX",
 		Args: cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string)error {
+		Run: func(cmd *cobra.Command, args []string) {
 		 filePath := args[0]
-		  return c.runApply(filePath)
+		  c.runApply(filePath)
 		},
 	}
 }
 
-func (c *CLI) runApply(file string) error {
+func (c *CLI) runApply(file string) {
 	if file == "" {
-		return fmt.Errorf("Please provide a config file path using -f")
+		fmt.Println("❌ Please provide a config file path using -f")
+		return
 	}
 
 	data, err := os.ReadFile(file)
 	if err != nil {
-		return fmt.Errorf("Cannot read file: %v", err)
+		fmt.Println("❌ Cannot read file:", err)
+		return
 	}
 
 	var server common.ServerConfig
-	err = yaml.Unmarshal(data, &server)
-	if err != nil {
-		return fmt.Errorf("Invalid YAML: %v", err)
+	if err := yaml.Unmarshal(data, &server); err != nil {
+		fmt.Println("❌ Invalid YAML:", err)
+		return
 	}
 
 	if err := isValidFormat(&server); err != nil {
-		return err 
+		fmt.Println("❌ Invalid configuration format:", err)
+		return
 	}
 
-	desFile := filepath.Join(c.serviceConfig, filepath.Base(server.Metadata.Name+".yaml"))
-	if err := hasRouteConflict(&server, desFile); err != nil {
-		return err
+	destFile := filepath.Join(
+		c.serviceConfig,
+		filepath.Base(server.Metadata.Name+".yaml"),
+	)
+
+	if err := hasRouteConflict(&server, destFile); err != nil {
+		fmt.Println("❌ Route conflict detected:", err)
+		return
 	}
 
-	err = os.MkdirAll(c.serviceConfig, 0755)
-	if err != nil {
-		return fmt.Errorf("Failed to created dir:%v", err)
+	if err := os.MkdirAll(c.serviceConfig, 0755); err != nil {
+		fmt.Println("❌ Failed to create config directory:", err)
+		return
 	}
 
 	if server.Spec.RateLimit == nil {
@@ -60,15 +68,22 @@ func (c *CLI) runApply(file string) error {
 		}
 	}
 
-	err = os.WriteFile(desFile, data, 0644)
-	if err != nil {
-		return fmt.Errorf("Failed to write config file: %v", err)
+	if err := os.WriteFile(destFile, data, 0644); err != nil {
+		fmt.Println("❌ Failed to write config file:", err)
+		return
 	}
 
-	fmt.Println("Configuration applied successfully")
-	c.Service.Restart()
-	return nil
+	fmt.Println("✅ Configuration applied successfully")
+	fmt.Println("🔄 Restarting ProxyX service...")
+
+	if err := c.Service.Restart(); err != nil {
+		fmt.Println("❌ Failed to restart ProxyX:", err)
+		return
+	}
+
+	fmt.Println("✅ ProxyX restarted successfully")
 }
+
 
 
 func isValidFormat(srv *common.ServerConfig) error {
@@ -138,7 +153,7 @@ func hasRouteConflict(newCfg *common.ServerConfig, newCfgFile string) error {
 			for _, oldRoute := range existingCfg.Spec.Routes {
 				if oldRoute.Path == newRoute.Path {
 					return fmt.Errorf(
-						"conflict detected: domain='%s' path='%s' already exists in %s",
+						"domain='%s' path='%s' already exists in %s",
 						newCfg.Spec.Domain,
 						newRoute.Path,
 						existingCfg.Metadata.Name,
