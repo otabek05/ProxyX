@@ -9,15 +9,15 @@ high concurrency and low latency. 🚀
 
 ## ✨ Features
 
-- Reverse Proxy
-- Static File Serving
-- TLS / HTTPS with Certbot
-- Load Balancing (Round-Robin)
-- Health Checking
-- Per-Domain Rate Limiting
-- Declarative YAML Configuration
-- Interactive CLI Tool
 
+- 🔁 Reverse Proxy
+- 📁 Static File Serving
+- 🔐 TLS / HTTPS with Certbot
+- ⚖️ Load Balancing (Round-Robin)
+- ❤️ Health Checking
+- 🚦 Per-Domain Rate Limiting
+- 📄 Declarative YAML Configuration
+- 🧰 Powerful Interactive CLI Tool
 
 ## 📦 Installation Guide
 
@@ -28,8 +28,7 @@ ProxyX supports the following platforms:
   - RPM-based (.rpm)
 - macOS (Darwin)
 
-For detailed installation steps, see:
-Installation Guide → doc/INSTALL.md
+For detailed installation instructions, see the [Installation Guide](doc/INSTALL.md).
 
 
 ## ⚙️ Configuration Guide
@@ -41,8 +40,7 @@ ProxyX uses a Kubernetes-style YAML configuration format to define:
 - Rate limits
 - Routing rules
 
-For full configuration examples and explanations, see:
-Configuration Guide → doc/CONFIGURATION.md
+For full detailed instructions and usage examples, see: [Configuration Guide](doc/CONFIGURATION.md)
 
 
 ## 🧰 CLI Tool
@@ -53,9 +51,7 @@ ProxyX includes a full lifecycle management CLI for:
 - Managing TLS certificates
 - Controlling the ProxyX service
 
-📖 Full command reference:
-CLI Tool Guide → doc/CLI.md
-
+For full command reference and usage examples, see: [CLI Tool Guide](doc/CLI.md)
 
 ## 🔐 TLS Configuration
 
@@ -66,8 +62,7 @@ Let’s Encrypt TLS certificates.
 - Multiple domains supported
 - Automatic certificate renewal
 
-📖 For detailed instructions, see:
-TLS Configuration Guide → doc/TLS.md
+For detailed instructions, see: [TLS Configuration Guide](doc/TLS.md)
 
 
 ## 🖥️ System Service & Ports
@@ -126,11 +121,9 @@ Middleware pipeline:
 - TLS-first production design
 
 
-## 👨‍💻 Author
+## Author
 
 Developed by **Otabek**  
-Go Backend Developer
-
 
 ## 📄 License
 
