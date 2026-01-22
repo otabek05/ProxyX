@@ -6,6 +6,11 @@ type ProxyConfig struct {
 	HTTP        HTTPConfig        `yaml:"http"`
 	HTTPS       HTTPSConfig       `yaml:"https"`
 	HealthCheck HealthCheckConfig `yaml:"healthCheck"`
+	Certbot     Certbot           `yaml:"certbot"`
+}
+
+type Certbot struct {
+	Email string `yaml:"email"`
 }
 
 type HTTPConfig struct {
@@ -23,7 +28,6 @@ type HTTPSConfig struct {
 	IdleTimeout       time.Duration `yaml:"idleTimeout"`
 	MaxHeaderBytes    int           `yaml:"maxHeaderBytes"`
 }
-
 
 type HealthCheckConfig struct {
 	Enabled  bool          `yaml:"enabled"`
