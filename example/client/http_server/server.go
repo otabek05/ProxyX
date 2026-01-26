@@ -29,7 +29,7 @@ func main() {
 
 	response := ApiResponse{
 		Message:    "success",
-		Data:       "raw data",
+		Data:       "response from 8080",
 		StatusCode: "1002",
 	}
 
