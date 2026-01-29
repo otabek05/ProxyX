@@ -16,6 +16,7 @@ func (c *CLI) applyConfigCmd() *cobra.Command {
 		Use:   "apply",
 		Short: "⚡ Apply a YAML configuration to ProxyX",
 		Args: cobra.ExactArgs(1),
+		PreRun: requireRoot,
 		Run: func(cmd *cobra.Command, args []string) {
 		 filePath := args[0]
 		  c.runApply(filePath)

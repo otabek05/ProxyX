@@ -22,7 +22,7 @@ func staticRouteHandler(ctx *fasthttp.RequestCtx, matched *routeInfo) {
 
 	indexFile := filepath.Join(staticDir, "index.html")
 	if _, err := os.Stat(indexFile); os.IsNotExist(err) {
-		ServeProxyHomepage(ctx)
+		ServeError(ctx)
 		return
 	}
 

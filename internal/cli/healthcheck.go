@@ -18,6 +18,7 @@ var (
 func (c *CLI) healthCheckCmd() *cobra.Command {
 	healthCheckCmd := &cobra.Command{
 		Use:   "healthcheck",
+		PreRun: requireRoot,
 		Short: "❤️ Manage ProxyX health check settings",
 		Long: `Configure ProxyX health checks to monitor service availability.
 

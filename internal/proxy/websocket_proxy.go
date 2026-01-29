@@ -37,7 +37,7 @@ func (p *ProxyServer) websocketProxyHandler(ctx *fasthttp.RequestCtx) {
 
 	wsServerAny, ok := p.wsProxies.Load(string(ctx.Host()))
 	if !ok {
-		ServeProxyHomepage(ctx)
+		ServeError(ctx)
 		return
 	}
 

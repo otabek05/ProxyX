@@ -13,13 +13,13 @@ func (p *ProxyServer) handleRequest(ctx *fasthttp.RequestCtx, servers map[string
 
 	routes, ok := servers[host]
 	if !ok {
-		ServeProxyHomepage(ctx)
+		ServeDefault(ctx)
 		return
 	}
 
 	matched := findMatchingRoute(routes, path)
 	if matched == nil {
-		ServeProxyHomepage(ctx)
+		ServeError(ctx)
 		return
 	}
 
@@ -39,7 +39,7 @@ func (p *ProxyServer) handleRequest(ctx *fasthttp.RequestCtx, servers map[string
 	case common.RouteWebsocket:
 		p.websocketProxyHandler(ctx)
 	default:
-		ServeProxyHomepage(ctx)
+		ServeError(ctx)
 	}
 }
 

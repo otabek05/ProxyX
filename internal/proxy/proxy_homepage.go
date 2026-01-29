@@ -7,7 +7,22 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-func ServeProxyHomepage(ctx *fasthttp.RequestCtx) {
+func ServeError(ctx *fasthttp.RequestCtx) {
+	ctx.SetStatusCode(fasthttp.StatusServiceUnavailable)
+	path := filepath.Join("/etc/proxyx/web", "error.html")
+	content, err := os.ReadFile(path)
+	if err != nil {
+		ctx.SetBodyString("No upstream")
+		return 
+	}
+
+	ctx.SetContentType("text/html")
+	ctx.SetBody(content)
+
+
+}
+
+func ServeDefault(ctx *fasthttp.RequestCtx) {
 	path := filepath.Join("/etc/proxyx/web", "index.html")
 	content, err := os.ReadFile(path)
 	if err != nil {
@@ -20,6 +35,7 @@ func ServeProxyHomepage(ctx *fasthttp.RequestCtx) {
 	ctx.SetContentType("text/html")
 	ctx.SetBody(content)
 }
+
 
 
 

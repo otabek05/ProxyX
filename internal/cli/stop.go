@@ -8,6 +8,7 @@ func (c *CLI) stopCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "stop",
 		Short: "🛑 Stop the running ProxyX service",
+		PreRun: requireRoot,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return c.Service.Stop()
 		},
