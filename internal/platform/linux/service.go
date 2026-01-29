@@ -31,9 +31,9 @@ func (s *Service) Stop() error {
 
 func (s *Service) Restart() error {
 	cmd := exec.Command("sudo", "systemctl", "restart", "proxyx")
-	output, err  := cmd.CombinedOutput()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return  fmt.Errorf("Error: %v, Output: %s", err , string(output)) 
+		return fmt.Errorf("Error: %v, Output: %s", err, string(output))
 	}
 
 	return nil
@@ -66,7 +66,11 @@ func (s *Service) Status() error {
 		return fmt.Errorf("Failed to get process stats")
 	}
 
-	fmt.Println("PID       CPU%    MEM%    Uptime")
-	fmt.Printf("%-9s %-7s %-7s %-7s\n", psFields[0], psFields[1], psFields[2], psFields[3])
+
+	fmt.Println("📊 ProxyX Process Status")
+	fmt.Printf("    PID     : %s\n", psFields[0])
+	fmt.Printf("    CPU     : %s %%\n", psFields[1])
+	fmt.Printf("    Memory  : %s %%\n", psFields[2])
+	fmt.Printf("    Uptime  : %s\n", psFields[3])
 	return nil
 }

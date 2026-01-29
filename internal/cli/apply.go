@@ -6,44 +6,104 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/gookit/color"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 )
 
-
 func (c *CLI) applyConfigCmd() *cobra.Command {
-	return  &cobra.Command{
-		Use:   "apply",
-		Short: "⚡ Apply a YAML configuration to ProxyX",
-		Args: cobra.ExactArgs(1),
+	return &cobra.Command{
+		Use:    "apply",
+		Short:  "⚡ Apply a YAML configuration to ProxyX",
+		Args:   cobra.ExactArgs(1),
 		PreRun: requireRoot,
 		Run: func(cmd *cobra.Command, args []string) {
-		 filePath := args[0]
-		  c.runApply(filePath)
+			filePath := args[0]
+		    if err := c.runApply(filePath); err != nil {
+				color.Red.Println(err.Error())
+			}
 		},
 	}
 }
 
+
+func (c *CLI) runApply(file string) error {
+	if file == "" {
+		return fmt.Errorf("❌ please provide a config file path using -f")
+	}
+
+	data, err := os.ReadFile(file)
+	if err != nil {
+		return fmt.Errorf("❌ cannot read file: %w", err)
+	}
+
+	var server common.ServerConfig
+	if err := yaml.Unmarshal(data, &server); err != nil {
+		return fmt.Errorf("❌ invalid YAML: %w", err)
+	}
+
+	if err := isValidFormat(&server); err != nil {
+		return fmt.Errorf("❌ invalid configuration format: %w", err)
+	}
+
+	destFile := filepath.Join(
+		c.serviceConfig,
+		server.Metadata.Name+".yaml",
+	)
+
+	if err := hasRouteConflict(&server, destFile); err != nil {
+		return fmt.Errorf("❌ route conflict detected: %w", err)
+	}
+
+	if err := os.MkdirAll(c.serviceConfig, 0755); err != nil {
+		return fmt.Errorf("❌ failed to create config directory: %w", err)
+	}
+
+	if server.Spec.RateLimit == nil {
+		server.Spec.RateLimit = &common.RateLimitConfig{
+			Requests:      1200,
+			WindowSeconds: 1,
+		}
+	}
+
+	if err := os.WriteFile(destFile, data, 0644); err != nil {
+		return fmt.Errorf("❌ failed to write config file: %w", err)
+	}
+
+	// success logs stay here
+	fmt.Println("✅ Configuration applied successfully")
+	fmt.Println("🔄 Restarting ProxyX service...")
+
+	if err := c.Service.Restart(); err != nil {
+		return fmt.Errorf("❌ failed to restart ProxyX: %w", err)
+	}
+
+	fmt.Println("✅ ProxyX restarted successfully")
+
+	return nil
+}
+
+/*
 func (c *CLI) runApply(file string) {
 	if file == "" {
-		fmt.Println("❌ Please provide a config file path using -f")
+		color.Red.Println("❌ Please provide a config file path using -f")
 		return
 	}
 
 	data, err := os.ReadFile(file)
 	if err != nil {
-		fmt.Println("❌ Cannot read file:", err)
+		color.Red.Println("❌ Cannot read file:", err)
 		return
 	}
 
 	var server common.ServerConfig
 	if err := yaml.Unmarshal(data, &server); err != nil {
-		fmt.Println("❌ Invalid YAML:", err)
+		color.Red.Println("❌ Invalid YAML:", err)
 		return
 	}
 
 	if err := isValidFormat(&server); err != nil {
-		fmt.Println("❌ Invalid configuration format:", err)
+		color.Red.Println("❌ Invalid configuration format:", err)
 		return
 	}
 
@@ -53,12 +113,12 @@ func (c *CLI) runApply(file string) {
 	)
 
 	if err := hasRouteConflict(&server, destFile); err != nil {
-		fmt.Println("❌ Route conflict detected:", err)
+		color.Red.Println("❌ Route conflict detected:", err)
 		return
 	}
 
 	if err := os.MkdirAll(c.serviceConfig, 0755); err != nil {
-		fmt.Println("❌ Failed to create config directory:", err)
+		color.Red.Println("❌ Failed to create config directory:", err)
 		return
 	}
 
@@ -70,7 +130,7 @@ func (c *CLI) runApply(file string) {
 	}
 
 	if err := os.WriteFile(destFile, data, 0644); err != nil {
-		fmt.Println("❌ Failed to write config file:", err)
+		color.Red.Println("❌ Failed to write config file:", err)
 		return
 	}
 
@@ -78,15 +138,14 @@ func (c *CLI) runApply(file string) {
 	fmt.Println("🔄 Restarting ProxyX service...")
 
 	if err := c.Service.Restart(); err != nil {
-		fmt.Println("❌ Failed to restart ProxyX:", err)
+		color.Red.Println("❌ Failed to restart ProxyX:", err)
 		return
 	}
 
 	fmt.Println("✅ ProxyX restarted successfully")
 }
 
-
-
+*/
 func isValidFormat(srv *common.ServerConfig) error {
 	if srv.Spec.Domain == "" {
 		return fmt.Errorf("server missing domain")

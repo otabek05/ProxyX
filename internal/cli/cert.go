@@ -2,6 +2,8 @@ package cli
 
 import (
 	"ProxyX/internal/common"
+	"ProxyX/internal/pkg/config"
+	"ProxyX/internal/pkg/utils"
 	"bufio"
 	"errors"
 	"fmt"
@@ -10,9 +12,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"ProxyX/internal/pkg/config"
-	"ProxyX/internal/pkg/utils"
-
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
@@ -20,10 +19,10 @@ import (
 
 func (c *CLI) certCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "cert [domain | renew]",
-		Short: "🔐 Manage TLS certificates with Certbot",
+		Use:    "cert [domain | renew]",
+		Short:  "🔐 Manage TLS certificates with Certbot",
 		PreRun: requireRoot,
-		Args:  cobra.MaximumNArgs(2),
+		Args:   cobra.MaximumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := c.runCert(args); err != nil {
 				fmt.Println(err)
@@ -32,9 +31,7 @@ func (c *CLI) certCmd() *cobra.Command {
 	}
 }
 
-
-
-func (c *CLI) runCert( args []string) error {
+func (c *CLI) runCert(args []string) error {
 	files, err := filepath.Glob(filepath.Join(c.serviceConfig, "*.yaml"))
 	if err != nil || len(files) == 0 {
 		return errors.New("⚠️ no configuration files found")
@@ -53,7 +50,6 @@ func (c *CLI) runCert( args []string) error {
 
 	return c.runIssueCert(args[0], files)
 }
-
 
 func (c *CLI) domainExists(domain string, files []string) bool {
 	for _, file := range files {

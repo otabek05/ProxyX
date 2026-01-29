@@ -4,7 +4,6 @@ import (
 	"ProxyX/internal/platform"
 	"fmt"
 	"os"
-
 	"github.com/spf13/cobra"
 )
 
@@ -48,7 +47,6 @@ Designed for developers and sysadmins who need more than just a reverse proxy, P
 	cli.root.AddCommand(cli.statusCmd())
 	cli.root.AddCommand(cli.versionCmd())
 	cli.root.AddCommand(cli.startCmd())
-
 	return cli
 
 }
@@ -71,3 +69,4 @@ func requireRoot(cmd *cobra.Command, args []string) {
         os.Exit(1)
     }
 }
+

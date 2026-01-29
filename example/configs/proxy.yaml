@@ -6,7 +6,7 @@ metadata:
   namespace: default
 
 spec:
-  domain: localhost
+  domain: easy365.daeryuk.org
 
   tls:
     certFile: path/to/certs/server.crt
