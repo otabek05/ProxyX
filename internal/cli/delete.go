@@ -13,6 +13,7 @@ func (c *CLI) deleteCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "delete [name]",
 		Short: "🗑️ Remove a ProxyX configuration or instance",
+		PreRun: requireRoot,
 		Example: `
      sudo proxyx delete local-proxy
      sudo proxyx delete my-api

@@ -22,6 +22,7 @@ func (c *CLI) certCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "cert [domain | renew]",
 		Short: "🔐 Manage TLS certificates with Certbot",
+		PreRun: requireRoot,
 		Args:  cobra.MaximumNArgs(2),
 		Run: func(cmd *cobra.Command, args []string) {
 			if err := c.runCert(args); err != nil {

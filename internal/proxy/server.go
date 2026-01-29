@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"sync"
-
 	"github.com/valyala/fasthttp"
 )
 
@@ -16,15 +15,9 @@ type ProxyServer struct {
 	proxyConfig *common.ProxyConfig
 	config      []common.ServerConfig
 
-	certCache  sync.Map
+	certCache sync.Map
 	proxies   sync.Map
 	wsProxies sync.Map
-
-	stats struct {
-		TotalRequests   uint64
-		UpstreamErrors  uint64
-		WebsocketErrors uint64
-	}
 }
 
 func NewServer(config []common.ServerConfig, proxyConfig *common.ProxyConfig) *ProxyServer {
@@ -33,14 +26,14 @@ func NewServer(config []common.ServerConfig, proxyConfig *common.ProxyConfig) *P
 		proxyConfig: proxyConfig,
 	}
 
-	p.router = p.NewRouter(config, p.proxyConfig)
+    p.configureProxy()
 	p.configureWSProxy()
 	return p
 }
 
-func (p *ProxyServer) Start() error  {
+func (p *ProxyServer) Start() error {
 	if err := p.loadAllCertificates(); err != nil {
-	   return err
+		return err
 	}
 
 	if p.proxyConfig.HealthCheck.Enabled {
@@ -65,8 +58,8 @@ func (p *ProxyServer) Start() error  {
 		MaxRequestBodySize: 1 * 1024 * 1024,
 
 		DisableHeaderNamesNormalizing: true,
-		DisableKeepalive: false,
-		DisablePreParseMultipartForm: true,
+		DisableKeepalive:              false,
+		DisablePreParseMultipartForm:  true,
 		NoDefaultServerHeader:         true,
 		NoDefaultDate:                 true,
 
@@ -110,7 +103,7 @@ func (p *ProxyServer) runHTTP() {
 	handler := func(ctx *fasthttp.RequestCtx) {
 		if len(p.config) == 0 {
 			ctx.SetStatusCode(fasthttp.StatusOK)
-			ServeProxyHomepage(ctx)
+			ServeDefault(ctx)
 			return
 		}
 

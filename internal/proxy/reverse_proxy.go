@@ -20,7 +20,7 @@ var resPool = sync.Pool{
 func (p *ProxyServer) reverseProxyxHandler(ctx *fasthttp.RequestCtx, matched *routeInfo) {
 	target := matched.loadBalancer.Next()
 	if target == nil {
-		ctx.Error("No upstream", fasthttp.StatusServiceUnavailable)
+		ServeError(ctx)
 		return
 	}
 
@@ -62,7 +62,7 @@ func (p *ProxyServer) reverseProxyxHandler(ctx *fasthttp.RequestCtx, matched *ro
 	}[ctx.IsTLS()])
 
 	if err := client.DoTimeout(req, resp, 5*time.Second); err != nil {
-		ctx.Error("Bad Gateway", fasthttp.StatusBadGateway)
+		ServeError(ctx)
 		return
 	}
 

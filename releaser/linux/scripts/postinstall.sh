@@ -10,7 +10,14 @@ if [ -d /etc/proxyx.web ]; then
     rm -rf /etc/proxyx.web
 fi
 
+
 # Enable and start service
 systemctl daemon-reload
 systemctl enable proxyx
 systemctl restart proxyx
+
+# Install bash completion
+if command -v proxyx >/dev/null 2>&1; then
+    mkdir -p /etc/bash_completion.d
+    proxyx completion bash > /etc/bash_completion.d/proxyx
+fi

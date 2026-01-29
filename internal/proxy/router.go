@@ -14,10 +14,10 @@ type routeInfo struct {
 	routeConfig  *common.RouteConfig
 }
 
-func (p *ProxyServer) NewRouter(config []common.ServerConfig, proxyConfig *common.ProxyConfig) fasthttp.RequestHandler {
+func (p *ProxyServer) configureProxy()  {
 	servers := make(map[string][]routeInfo)
 
-	for _, server := range config {
+	for _, server := range p.config {
 		if server.Spec.Domain == "" {
 			panic("Domain must be specified ")
 		}
@@ -33,7 +33,7 @@ func (p *ProxyServer) NewRouter(config []common.ServerConfig, proxyConfig *commo
 			var lb *LoadBalancer
 			if route.Type == common.RouteReverseProxy {
 				var err error
-				lb, err = NewLoadBalancer(route.ReverseProxy.Servers, proxyConfig)
+				lb, err = NewLoadBalancer(route.ReverseProxy.Servers, p.proxyConfig)
 				if err != nil {
 					panic(err)
 				}
@@ -49,7 +49,7 @@ func (p *ProxyServer) NewRouter(config []common.ServerConfig, proxyConfig *commo
 		servers[server.Spec.Domain] = routes
 	}
 
-	return func(ctx *fasthttp.RequestCtx) {
+	p.router = func(ctx *fasthttp.RequestCtx) {
 		p.handleRequest(ctx, servers)
 	}
 }

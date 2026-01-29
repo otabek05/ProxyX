@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ProxyX • Service Unavailable</title>
+
+<style>
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 40px;
+    background: #f9fafb;
+    color: #1f2937;
+  }
+
+  .container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .error-badge {
+    display: inline-block;
+    background: #fee2e2;
+    color: #991b1b;
+    padding: 6px 12px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-size: 2.4rem;
+    margin-bottom: 16px;
+    color: #dc2626;
+  }
+
+  p {
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .details {
+    background: #ffffff;
+    border-left: 4px solid #dc2626;
+    padding: 16px;
+    border-radius: 6px;
+    margin-top: 24px;
+  }
+
+  .details ul {
+    padding-left: 20px;
+  }
+
+  .details li {
+    margin-bottom: 10px;
+  }
+
+  .footer {
+    margin-top: 32px;
+    font-size: 0.9rem;
+    color: #6b7280;
+  }
+
+  .code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    background: #f3f4f6;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.95rem;
+  }
+</style>
+</head>
+
+<body>
+  <div class="container">
+
+    <span class="error-badge">503 • Service Unavailable</span>
+
+    <h1>No Upstream Available</h1>
+
+    <p>
+      ProxyX was unable to forward your request because no healthy upstream
+      service is currently available.
+    </p>
+
+    <p>
+      This usually means the backend service is down, unreachable, or failed
+      health checks.
+    </p>
+
+    <div class="details">
+      <p><strong>Possible reasons:</strong></p>
+      <ul>
+        <li>The upstream service is not running</li>
+        <li>Health checks are failing</li>
+        <li>Network connectivity issues</li>
+        <li>Incorrect routing or service configuration</li>
+      </ul>
+
+      <p>
+        Error returned by ProxyX: <span class="code">No upstream</span>
+      </p>
+    </div>
+
+    <div class="footer">
+      ProxyX • Reverse Proxy • Load Balancer • Edge Gateway
+    </div>
+
+  </div>
+</body>
+</html>
