@@ -11,14 +11,14 @@ import (
 
 func (c *CLI) startCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "start",
-		Short: "▶️ Start the ProxyX service",
+		Use:    "start",
+		Short:  "▶️ Start the ProxyX service",
 		PreRun: requireRoot,
-		Run: func(cmd *cobra.Command, args []string)  {
+		Run: func(cmd *cobra.Command, args []string) {
 
 			if IsServerRunning() {
 				log.Println("ProxyX server is already running.")
-				return 
+				return
 			}
 
 			proxyConfig, err := config.LoadProxyXConfig()
@@ -32,17 +32,16 @@ func (c *CLI) startCmd() *cobra.Command {
 			}
 
 			srv := proxy.NewServer(serverConfig, proxyConfig)
-			srv.Start()
+			runServer(srv)
 		},
 	}
 
 }
 
-
 func IsServerRunning() bool {
 	conn, err := net.Dial("tcp", "127.0.0.1:443")
 	if err != nil {
-		return false 
+		return false
 	}
 
 	conn.Close()

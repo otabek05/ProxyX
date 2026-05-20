@@ -7,11 +7,30 @@ builds:
     binary: proxyx
     goos:
       - linux
+      - darwin
+      - windows
     goarch:
       - amd64
       - arm64
     env:
       - CGO_ENABLED=0
+
+archives:
+  - id: proxyx
+    builds:
+      - proxyx
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - README.md
+      - web/**/*
+      - src: releaser/windows/scripts/*.ps1
+        dst: scripts
+        strip_parent: true
 
 nfpms:
   - id: proxyx-linux
@@ -38,4 +57,3 @@ nfpms:
       preinstall: releaser/linux/scripts/preinstall.sh
       postinstall: releaser/linux/scripts/postinstall.sh
       preremove: releaser/linux/scripts/preremove.sh
-

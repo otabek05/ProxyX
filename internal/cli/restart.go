@@ -9,8 +9,8 @@ func (c *CLI) restartCmd() *cobra.Command {
 		Use:   "restart",
 		PreRun: requireRoot,
 		Short: "🔄 Restart the ProxyX service",
-		Run: func(cmd *cobra.Command, args []string) {
-			c.Service.Restart()
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return c.Service.Restart()
 		},
 	}
 }

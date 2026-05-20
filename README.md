@@ -26,7 +26,8 @@ ProxyX supports the following platforms:
 - Linux
   - Debian-based (.deb)
   - RPM-based (.rpm)
-- macOS (Darwin)
+- macOS (Darwin) — `tar.gz` archive (amd64 + arm64)
+- Windows — `zip` archive with PowerShell installer; runs as a native Windows service (amd64 + arm64)
 
 For detailed installation instructions, see the [Installation Guide](doc/INSTALL.md).
 
@@ -67,9 +68,11 @@ For detailed instructions, see: [TLS Configuration Guide](doc/TLS.md)
 
 ## 🖥️ System Service & Ports
 
-ProxyX installs itself as a system service:
+ProxyX installs itself as a native system service on each platform:
 
-  proxyx.service
+- Linux:   `proxyx.service` (systemd)
+- macOS:   `org.proxyx.service` (launchd)
+- Windows: `proxyx` (Service Control Manager)
 
 It is designed to run as a production-grade daemon.
 

@@ -62,11 +62,10 @@ func (c *CLI) Help() {
 	c.root.Help()
 }
 
-
 func requireRoot(cmd *cobra.Command, args []string) {
-    if os.Geteuid() != 0 {
-        fmt.Fprintln(os.Stderr, "This command must be run with sudo")
-        os.Exit(1)
-    }
+	if !isElevated() {
+		fmt.Fprintln(os.Stderr, elevationMessage)
+		os.Exit(1)
+	}
 }
 
