@@ -31,9 +31,11 @@ func (c *CLI) webCmd() *cobra.Command {
 				Dir:     c.serviceConfig,
 				Restart: c.Service.Restart,
 			}
-			url := fmt.Sprintf("http://127.0.0.1:%d", port)
-			color.Green.Printf("🌐 ProxyX config panel running at %s\n", url)
-			fmt.Println("   Bound to localhost only. Press Ctrl+C to stop.")
+			color.Green.Printf("🌐 ProxyX config panel running — open it in a browser on THIS machine:\n")
+			fmt.Printf("     http://127.0.0.1:%d   (or http://localhost:%d)\n", port, port)
+			fmt.Println("   Localhost only. If you're on a remote server, tunnel first:")
+			fmt.Printf("     ssh -L %d:127.0.0.1:%d user@server\n", port, port)
+			fmt.Println("   Press Ctrl+C to stop.")
 			if err := srv.ListenAndServe(port); err != nil {
 				color.Red.Printf("❌ config panel stopped: %s\n", err.Error())
 				os.Exit(1)

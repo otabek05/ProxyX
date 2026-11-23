@@ -1,8 +1,9 @@
 // Package webui is the localhost-only browser config panel started by
 // `proxyx web`. It lets you view, create, edit, apply, and delete server
 // configurations from a browser, reusing internal/configmgr so it behaves
-// exactly like the CLI. It binds to 127.0.0.1 and additionally refuses any
-// non-loopback client, so it is never reachable from the network.
+// exactly like the CLI. It binds to the loopback interfaces only (IPv4
+// 127.0.0.1 and IPv6 ::1) and additionally refuses any non-loopback client,
+// so it is never reachable from the network.
 package webui
 
 import (
@@ -27,15 +28,39 @@ type Server struct {
 	Restart func() error // restarts the proxy after a write
 }
 
-// ListenAndServe binds to 127.0.0.1:port and serves until an error occurs.
+// ListenAndServe binds to both loopback interfaces — IPv4 127.0.0.1 and IPv6
+// ::1 — on the given port, so the panel is reachable whether "localhost"
+// resolves to IPv4 or IPv6. It stays loopback-only. It returns when any
+// listener stops, or an error if neither loopback address could be bound.
 func (s *Server) ListenAndServe(port int) error {
-	addr := fmt.Sprintf("127.0.0.1:%d", port)
 	httpServer := &http.Server{
-		Addr:              addr,
 		Handler:           s.loopbackOnly(s.routes()),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
-	return httpServer.ListenAndServe()
+
+	addrs := []string{
+		fmt.Sprintf("127.0.0.1:%d", port),
+		fmt.Sprintf("[::1]:%d", port),
+	}
+	var listeners []net.Listener
+	var lastErr error
+	for _, addr := range addrs {
+		ln, err := net.Listen("tcp", addr)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		listeners = append(listeners, ln)
+	}
+	if len(listeners) == 0 {
+		return fmt.Errorf("could not bind to loopback on port %d (already in use?): %w", port, lastErr)
+	}
+
+	errc := make(chan error, len(listeners))
+	for _, ln := range listeners {
+		go func(l net.Listener) { errc <- httpServer.Serve(l) }(ln)
+	}
+	return <-errc
 }
 
 func (s *Server) routes() http.Handler {
