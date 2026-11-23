@@ -14,6 +14,7 @@ type ProxyServer struct {
 	router      fasthttp.RequestHandler
 	proxyConfig *common.ProxyConfig
 	config      []common.ServerConfig
+	whitelist   *Whitelist
 
 	certCache sync.Map
 	proxies   sync.Map
@@ -24,6 +25,7 @@ func NewServer(config []common.ServerConfig, proxyConfig *common.ProxyConfig) *P
 	p := &ProxyServer{
 		config:      config,
 		proxyConfig: proxyConfig,
+		whitelist:   NewWhitelist(proxyConfig.Whitelist),
 	}
 
     p.configureProxy()

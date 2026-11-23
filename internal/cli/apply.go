@@ -13,14 +13,15 @@ import (
 
 func (c *CLI) applyConfigCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:    "apply",
-		Short:  "⚡ Apply a YAML configuration to ProxyX",
-		Args:   cobra.ExactArgs(1),
-		PreRun: requireRoot,
+		Use:     "apply [file]",
+		Short:   "⚡ Apply a YAML configuration to ProxyX",
+		Args:    cobra.ExactArgs(1),
+		PreRun:  requireRoot,
+		Example: "  sudo proxyx config apply ./my-app.yaml",
 		Run: func(cmd *cobra.Command, args []string) {
-			filePath := args[0]
-		    if err := c.runApply(filePath); err != nil {
+			if err := c.runApply(args[0]); err != nil {
 				color.Red.Println(err.Error())
+				os.Exit(1)
 			}
 		},
 	}
@@ -29,7 +30,7 @@ func (c *CLI) applyConfigCmd() *cobra.Command {
 
 func (c *CLI) runApply(file string) error {
 	if file == "" {
-		return fmt.Errorf("❌ please provide a config file path using -f")
+		return fmt.Errorf("❌ please provide a config file path, e.g. proxyx config apply ./my-app.yaml")
 	}
 
 	data, err := os.ReadFile(file)
@@ -59,93 +60,24 @@ func (c *CLI) runApply(file string) error {
 		return fmt.Errorf("❌ failed to create config directory: %w", err)
 	}
 
-	if server.Spec.RateLimit == nil {
-		server.Spec.RateLimit = &common.RateLimitConfig{
-			Requests:      1200,
-			WindowSeconds: 1,
-		}
-	}
-
+	// A config without its own rateLimit falls back to the global default at
+	// runtime, so nothing extra needs to be written here.
 	if err := os.WriteFile(destFile, data, 0644); err != nil {
 		return fmt.Errorf("❌ failed to write config file: %w", err)
 	}
 
-	// success logs stay here
-	fmt.Println("✅ Configuration applied successfully")
+	color.Green.Println("✅ Configuration applied successfully")
 	fmt.Println("🔄 Restarting ProxyX service...")
 
 	if err := c.Service.Restart(); err != nil {
 		return fmt.Errorf("❌ failed to restart ProxyX: %w", err)
 	}
 
-	fmt.Println("✅ ProxyX restarted successfully")
+	color.Green.Println("✅ ProxyX restarted successfully")
 
 	return nil
 }
 
-/*
-func (c *CLI) runApply(file string) {
-	if file == "" {
-		color.Red.Println("❌ Please provide a config file path using -f")
-		return
-	}
-
-	data, err := os.ReadFile(file)
-	if err != nil {
-		color.Red.Println("❌ Cannot read file:", err)
-		return
-	}
-
-	var server common.ServerConfig
-	if err := yaml.Unmarshal(data, &server); err != nil {
-		color.Red.Println("❌ Invalid YAML:", err)
-		return
-	}
-
-	if err := isValidFormat(&server); err != nil {
-		color.Red.Println("❌ Invalid configuration format:", err)
-		return
-	}
-
-	destFile := filepath.Join(
-		c.serviceConfig,
-		filepath.Base(server.Metadata.Name+".yaml"),
-	)
-
-	if err := hasRouteConflict(&server, destFile); err != nil {
-		color.Red.Println("❌ Route conflict detected:", err)
-		return
-	}
-
-	if err := os.MkdirAll(c.serviceConfig, 0755); err != nil {
-		color.Red.Println("❌ Failed to create config directory:", err)
-		return
-	}
-
-	if server.Spec.RateLimit == nil {
-		server.Spec.RateLimit = &common.RateLimitConfig{
-			Requests:      1200,
-			WindowSeconds: 1,
-		}
-	}
-
-	if err := os.WriteFile(destFile, data, 0644); err != nil {
-		color.Red.Println("❌ Failed to write config file:", err)
-		return
-	}
-
-	fmt.Println("✅ Configuration applied successfully")
-	fmt.Println("🔄 Restarting ProxyX service...")
-
-	if err := c.Service.Restart(); err != nil {
-		color.Red.Println("❌ Failed to restart ProxyX:", err)
-		return
-	}
-
-	fmt.Println("✅ ProxyX restarted successfully")
-}
-
-*/
 func isValidFormat(srv *common.ServerConfig) error {
 	if srv.Spec.Domain == "" {
 		return fmt.Errorf("server missing domain")

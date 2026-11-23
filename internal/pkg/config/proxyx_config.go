@@ -95,5 +95,13 @@ func defaultConfig() common.ProxyConfig {
 			Path:     "/health",
 			Interval: 10 * time.Second,
 		},
+		RateLimit: &common.RateLimitConfig{
+			Requests:      1200,
+			WindowSeconds: 1,
+		},
+		Whitelist: &common.WhitelistConfig{
+			Mode: common.WhitelistBypass,
+			IPs:  []string{},
+		},
 	}
 }

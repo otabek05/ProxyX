@@ -36,10 +36,9 @@ Designed for developers and sysadmins who need more than just a reverse proxy, P
 		serviceConfig: "/etc/proxyx/conf.d",
 	}
 
-	cli.root.AddCommand(cli.applyConfigCmd())
-	cli.root.AddCommand(cli.deleteCmd())
 	cli.root.AddCommand(cli.certCmd())
 
+	// apply and delete are subcommands of `config` (see configCmd).
 	cli.root.AddCommand(cli.configCmd())
 	cli.root.AddCommand(cli.healthCheckCmd())
 	cli.root.AddCommand(cli.restartCmd())
