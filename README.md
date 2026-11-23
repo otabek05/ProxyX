@@ -19,7 +19,7 @@ high concurrency and low latency. 🚀
 - 🛡️ Global IP Whitelist (rate-limit bypass or hard allow-list)
 - 📄 Declarative YAML Configuration
 - 🧰 Powerful Interactive CLI Tool
-- 🌐 Browser Config Panel (`proxyx web`, localhost only)
+- 🌐 Browser Config Panel (runs with the service, localhost only)
 
 ## 📦 Installation Guide
 
@@ -59,17 +59,21 @@ For full command reference and usage examples, see: [CLI Tool Guide](doc/CLI.md)
 
 ### 🌐 Browser Config Panel
 
-Prefer a UI over editing YAML by hand? Run:
+ProxyX serves a small config panel **as part of the service** — it runs in the
+background whenever ProxyX is running. Just start the proxy and open it on the
+same machine:
 
 ```bash
-sudo proxyx web            # http://127.0.0.1:8787
-sudo proxyx web --port 9000
+sudo proxyx start
+# then browse to:
+http://127.0.0.1:8787      # or http://localhost:8787
 ```
 
-A small web panel to view, create, edit, apply, and delete configurations from
-your browser. It binds to **127.0.0.1 only** and refuses any non-loopback
-client, so it is never reachable from the network. See the
-[Web Config Panel Guide](doc/WEBUI.md).
+View, create, edit, apply, and delete configurations from your browser;
+applying reloads the proxy **in place** (no restart). It binds to **loopback
+only** (127.0.0.1 and ::1) and refuses any non-loopback client, so it is never
+reachable from the network. Configure or disable it under `webPanel` in the
+global config. See the [Web Config Panel Guide](doc/WEBUI.md).
 
 ## 🔐 TLS Configuration
 
