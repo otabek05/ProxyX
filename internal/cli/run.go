@@ -12,7 +12,7 @@ import (
 func (c *CLI) startCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:    "start",
-		Short:  "▶️ Start the ProxyX service",
+		Short:  "🟢 Start the ProxyX service",
 		PreRun: requireRoot,
 		Run: func(cmd *cobra.Command, args []string) {
 

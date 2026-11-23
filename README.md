@@ -19,6 +19,7 @@ high concurrency and low latency. 🚀
 - 🛡️ Global IP Whitelist (rate-limit bypass or hard allow-list)
 - 📄 Declarative YAML Configuration
 - 🧰 Powerful Interactive CLI Tool
+- 🌐 Browser Config Panel (`proxyx web`, localhost only)
 
 ## 📦 Installation Guide
 
@@ -54,6 +55,20 @@ ProxyX includes a full lifecycle management CLI for:
 - Controlling the ProxyX service
 
 For full command reference and usage examples, see: [CLI Tool Guide](doc/CLI.md)
+
+### 🌐 Browser Config Panel
+
+Prefer a UI over editing YAML by hand? Run:
+
+```bash
+sudo proxyx web            # http://127.0.0.1:8787
+sudo proxyx web --port 9000
+```
+
+A small web panel to view, create, edit, apply, and delete configurations from
+your browser. It binds to **127.0.0.1 only** and refuses any non-loopback
+client, so it is never reachable from the network. See the
+[Web Config Panel Guide](doc/WEBUI.md).
 
 ## 🔐 TLS Configuration
 
