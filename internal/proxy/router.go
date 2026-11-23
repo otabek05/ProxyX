@@ -22,7 +22,8 @@ func (p *ProxyServer) configureProxy()  {
 			panic("Domain must be specified ")
 		}
 
-		rl := NewRateLimiter(server.Spec.RateLimit.Requests, time.Duration(server.Spec.RateLimit.WindowSeconds)*time.Minute)
+		rlCfg := p.rateLimitFor(&server)
+		rl := NewRateLimiter(rlCfg.Requests, time.Duration(rlCfg.WindowSeconds)*time.Second)
 		var routes []routeInfo
 		for _, route := range server.Spec.Routes {
 
@@ -52,4 +53,17 @@ func (p *ProxyServer) configureProxy()  {
 	p.router = func(ctx *fasthttp.RequestCtx) {
 		p.handleRequest(ctx, servers)
 	}
+}
+
+// rateLimitFor resolves the rate limit for a server: its own spec wins, else the
+// global default from config.yaml, else a hardcoded safe fallback. This also
+// guards against a nil per-domain rate limit (a config applied without one).
+func (p *ProxyServer) rateLimitFor(server *common.ServerConfig) common.RateLimitConfig {
+	if server.Spec.RateLimit != nil {
+		return *server.Spec.RateLimit
+	}
+	if p.proxyConfig != nil && p.proxyConfig.RateLimit != nil {
+		return *p.proxyConfig.RateLimit
+	}
+	return common.RateLimitConfig{Requests: 1200, WindowSeconds: 1}
 }

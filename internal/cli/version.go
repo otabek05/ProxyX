@@ -11,7 +11,7 @@ func (c *CLI) versionCmd() *cobra.Command {
 		Use:   "version",
 		Short: "📦 Display the current ProxyX version",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println("ProxyX version v0.1.3")
+			fmt.Println("ProxyX version v0.1.4")
 		},
 	}
 }

@@ -15,7 +15,8 @@ high concurrency and low latency. 🚀
 - 🔐 TLS / HTTPS with Certbot
 - ⚖️ Load Balancing (Round-Robin)
 - ❤️ Health Checking
-- 🚦 Per-Domain Rate Limiting
+- 🚦 Per-Domain Rate Limiting (with a global default)
+- 🛡️ Global IP Whitelist (rate-limit bypass or hard allow-list)
 - 📄 Declarative YAML Configuration
 - 🧰 Powerful Interactive CLI Tool
 
@@ -102,7 +103,8 @@ It is designed to run as a production-grade daemon.
 
 Middleware pipeline:
 - Request Logger
-- Per-Domain Rate Limiter
+- Global IP Whitelist
+- Per-Domain Rate Limiter (global default fallback)
 - Load Balancer
 - Health Checker
 
@@ -119,7 +121,8 @@ Middleware pipeline:
 ## 🔒 Security Features
 
 - HTTPS with Let’s Encrypt
-- Per-domain rate limiting
+- Per-domain rate limiting with a global default
+- Global IP whitelist (bypass or allow-list mode)
 - Backend health validation
 - TLS-first production design
 

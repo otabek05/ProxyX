@@ -23,13 +23,30 @@ func (p *ProxyServer) handleRequest(ctx *fasthttp.RequestCtx, servers map[string
 		return
 	}
 
-	ip := ctx.RemoteAddr().String()
-    if !matched.rateLimiter.Allow(ip) {
-        ctx.SetStatusCode(fasthttp.StatusTooManyRequests)
-        ctx.SetBodyString("429 Too Many Requests")
-        return
-    }
-	
+	// Use the bare client IP (no port) so rate-limit buckets and whitelist
+	// matching are keyed per client, not per connection.
+	ip := ctx.RemoteIP().String()
+
+	bypassRateLimit := false
+	if p.whitelist != nil && !p.whitelist.Empty() {
+		listed := p.whitelist.Contains(ip)
+		switch p.whitelist.Mode() {
+		case common.WhitelistAllow:
+			if !listed {
+				ctx.SetStatusCode(fasthttp.StatusForbidden)
+				ctx.SetBodyString("403 Forbidden")
+				return
+			}
+		case common.WhitelistBypass:
+			bypassRateLimit = listed
+		}
+	}
+
+	if !bypassRateLimit && !matched.rateLimiter.Allow(ip) {
+		ctx.SetStatusCode(fasthttp.StatusTooManyRequests)
+		ctx.SetBodyString("429 Too Many Requests")
+		return
+	}
 
 	switch matched.routeConfig.Type {
 	case common.RouteReverseProxy:

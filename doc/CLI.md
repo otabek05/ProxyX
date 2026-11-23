@@ -9,12 +9,14 @@ TLS certificates, and service state.
 
 | Command | Description |
 |-------|-------------|
-| `apply` | Apply a configuration file |
+| `config` | Show active configurations (same as `config list`) |
+| `config list` | List active configurations |
+| `config list -o wide` | Show full detailed configuration view |
+| `config apply [file]` | Apply a configuration file |
+| `config delete [name]` | Delete configuration by its **name** |
+| `config example` | Print a sample server configuration |
+| `config example --global` | Print the global `config.yaml` (timeouts, default rate limit, whitelist) |
 | `cert` | Interactive TLS certificate issuance via Certbot |
-| `config` | Show active configurations |
-| `config -o wide` | Show full detailed configuration view |
-| `delete` | Delete applied configuration (default behavior) |
-| `delete [name]` | Delete configuration by its **name** |
 | `restart` | Reload ProxyX configuration |
 | `status` | Check if ProxyX service is running |
 | `stop` | Stop the ProxyX service |
@@ -27,9 +29,11 @@ TLS certificates, and service state.
 ### ✅ Basic CLI Usage
 
 ```bash
-sudo proxyx apply  path/to/file
-sudo proxyx configs
-sudo proxyx configs -o wide
+proxyx config example > my-app.yaml   # print a sample to start from
+sudo proxyx config apply my-app.yaml
+proxyx config list
+proxyx config list -o wide
+sudo proxyx config delete my-app
 sudo proxyx restart
 sudo proxyx status
 ```
@@ -37,7 +41,7 @@ sudo proxyx status
 ### Wide Configuration View
 
 ```bash
-sudo proxyx configs -o wide
+proxyx config list -o wide
 ```
 ```
 ┌──────────────┬─────────────┬───────────┬───────────┬────────────┬──────────────┬───────────────────────┬───────────────┬─────────────────────────┐

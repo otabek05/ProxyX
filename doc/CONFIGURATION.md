@@ -64,9 +64,10 @@ metadata:
 
 ### Used by CLI commands:
 
-```yaml
-proxyx delete <name>
-proxyx configs
+```bash
+sudo proxyx config apply <file>
+sudo proxyx config delete <name>
+proxyx config list
 ```
 ---
 
@@ -101,7 +102,9 @@ rateLimit:
   requests: 1000           # Max requests allowed in the window
   windowSeconds: 2         # Time window in seconds
 ```
-* Rate limiting is applied per domain, across all routes.
+* Rate limiting is applied **per domain**, across all routes, keyed by client IP.
+* This block is **optional** — a domain without it falls back to the global
+  default defined in `config.yaml` (see [Global Configuration](#-global-configuration)).
 * Prevents abuse and overload of backend servers.
 * Ensures fair resource allocation among clients.
 
@@ -187,10 +190,64 @@ path: /api/**    # Matches only /api/*
 * WebSocket routes must explicitly use `type: Websocket`.
 * /** wildcard matches all sub-paths.
 
+---
+
+## 🌍 Global Configuration
+
+Per-domain files live in `/etc/proxyx/conf.d/`. ProxyX also has a single
+**global** config at `/etc/proxyx/config/config.yaml`, created with sane
+defaults on first run. It holds server timeouts, health-check settings, a
+default rate limit, and a global IP whitelist.
+
+Print a ready-to-edit copy with:
+
+```bash
+proxyx config example --global
+```
+
+```yaml
+# Default rate limit for any domain whose own spec sets no rateLimit.
+rateLimit:
+  requests: 1200
+  windowSeconds: 1
+
+# Global IP whitelist.
+whitelist:
+  mode: bypass        # "bypass" or "allow"
+  ips:
+    - 127.0.0.1
+    - 10.0.0.0/8      # single IPs or CIDR blocks
+```
+
+### Default Rate Limit
+
+* Applied to any domain that does **not** define its own `rateLimit`.
+* A per-domain `rateLimit` always overrides this default.
+
+### IP Whitelist
+
+The whitelist has two modes:
+
+| Mode | Behavior |
+|------|----------|
+| `bypass` (default) | Listed IPs/CIDRs skip rate limiting entirely; everyone else is served normally. Good for office IPs, health checkers, monitoring. |
+| `allow` | **Only** listed IPs/CIDRs may connect; every other client receives `403 Forbidden`. A hard access gate. |
+
+* Entries may be individual IPs (`203.0.113.7`) or CIDR blocks (`10.0.0.0/8`).
+* An **empty** list disables the whitelist (in `allow` mode this means the
+  whitelist is treated as off rather than blocking everyone).
+* Changes take effect after `sudo proxyx restart`.
+
+> ⚠️ Be careful with `mode: allow` — an incomplete list can lock you (and your
+> health checks) out. Include your own address before switching it on.
+
+---
+
 ✅ Summary
 
 * YAML-first configuration with inline comments.
 * Metadata enables safe lifecycle management via CLI.
-* RateLimiter protects domains from overload.
+* RateLimiter protects domains from overload, with a global default fallback.
+* Global IP whitelist supports both rate-limit bypass and hard allow-listing.
 * Multiple route types supported: Static, ReverseProxy, WebSocket.
 * TLS termination handled per domain.
