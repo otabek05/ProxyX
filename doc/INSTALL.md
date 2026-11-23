@@ -1,8 +1,10 @@
 # ProxyX Installation Guide
 
 This document explains how to install **ProxyX** on supported platforms.
-Replace `VERSION` in the commands below with the release you want
-(e.g. `0.1.4`).
+
+Each section starts by setting a `VERSION` variable — change that one line
+to the release you want, then paste the rest as-is. The latest release is
+[`0.1.4`](https://github.com/otabek05/ProxyX/releases/latest).
 
 ------------------------------------------------------------------------
 
@@ -13,15 +15,17 @@ Replace `VERSION` in the commands below with the release you want
 #### AMD64 (x86_64)
 
 ``` bash
-wget https://github.com/otabek05/ProxyX/releases/download/vVERSION/proxyx_VERSION_linux_amd64.deb
-sudo apt install ./proxyx_VERSION_linux_amd64.deb
+VERSION=0.1.4
+wget https://github.com/otabek05/ProxyX/releases/download/v${VERSION}/proxyx_${VERSION}_linux_amd64.deb
+sudo apt install ./proxyx_${VERSION}_linux_amd64.deb
 ```
 
 #### ARM64
 
 ``` bash
-wget https://github.com/otabek05/ProxyX/releases/download/vVERSION/proxyx_VERSION_linux_arm64.deb
-sudo apt install ./proxyx_VERSION_linux_arm64.deb
+VERSION=0.1.4
+wget https://github.com/otabek05/ProxyX/releases/download/v${VERSION}/proxyx_${VERSION}_linux_arm64.deb
+sudo apt install ./proxyx_${VERSION}_linux_arm64.deb
 ```
 
 ------------------------------------------------------------------------
@@ -31,15 +35,17 @@ sudo apt install ./proxyx_VERSION_linux_arm64.deb
 #### AMD64 (x86_64)
 
 ``` bash
-wget https://github.com/otabek05/ProxyX/releases/download/vVERSION/proxyx_VERSION_linux_amd64.rpm
-sudo dnf install ./proxyx_VERSION_linux_amd64.rpm
+VERSION=0.1.4
+wget https://github.com/otabek05/ProxyX/releases/download/v${VERSION}/proxyx_${VERSION}_linux_amd64.rpm
+sudo dnf install ./proxyx_${VERSION}_linux_amd64.rpm
 ```
 
 #### ARM64
 
 ``` bash
-wget https://github.com/otabek05/ProxyX/releases/download/vVERSION/proxyx_VERSION_linux_arm64.rpm
-sudo dnf install ./proxyx_VERSION_linux_arm64.rpm
+VERSION=0.1.4
+wget https://github.com/otabek05/ProxyX/releases/download/v${VERSION}/proxyx_${VERSION}_linux_arm64.rpm
+sudo dnf install ./proxyx_${VERSION}_linux_arm64.rpm
 ```
 
 #### ✅ Verify Installation
@@ -66,8 +72,9 @@ Pick the archive for your CPU — `arm64` for Apple Silicon (M1/M2/M3),
 
 ``` bash
 # Apple Silicon
-curl -LO https://github.com/otabek05/ProxyX/releases/download/vVERSION/proxyx_VERSION_darwin_arm64.tar.gz
-tar -xzf proxyx_VERSION_darwin_arm64.tar.gz
+VERSION=0.1.4
+curl -LO https://github.com/otabek05/ProxyX/releases/download/v${VERSION}/proxyx_${VERSION}_darwin_arm64.tar.gz
+tar -xzf proxyx_${VERSION}_darwin_arm64.tar.gz
 
 # Install binary and config/web assets
 sudo install -m 0755 proxyx /usr/local/bin/proxyx
@@ -114,8 +121,9 @@ Manager (SCM). Pick `amd64` for x64 PCs or `arm64` for ARM devices
 
 ``` powershell
 # 1. Download and unpack the release archive
+$VERSION = "0.1.4"
 Invoke-WebRequest `
-  -Uri https://github.com/otabek05/ProxyX/releases/download/vVERSION/proxyx_VERSION_windows_amd64.zip `
+  -Uri "https://github.com/otabek05/ProxyX/releases/download/v$VERSION/proxyx_${VERSION}_windows_amd64.zip" `
   -OutFile proxyx.zip
 Expand-Archive .\proxyx.zip -DestinationPath .\proxyx
 
