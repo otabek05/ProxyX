@@ -22,10 +22,17 @@ func NewCLI(service platform.Service) *CLI {
 		Long: `🚀 ProxyX is a powerful and flexible command-line tool for managing proxies, similar to Nginx but with extended capabilities.
 
 With ProxyX, you can:
-- Effortlessly manage proxy configurations and SSL/TLS certificates
-- Monitor service health and status
-- Start, stop, and restart proxy instances
-- Gain full control over your proxy environment with a simple CLI
+- 📄 Manage proxy configurations as YAML — list, apply, delete, and print samples
+- 🌐 Edit configs in your browser with a localhost-only panel (proxyx web)
+- 🔐 Issue and manage SSL/TLS certificates
+- 📊 Monitor service health and status
+- 🔄 Start, stop, and restart proxy instances
+
+Common commands:
+  proxyx config list          show configurations
+  proxyx config apply <file>  apply a configuration
+  proxyx config example       print a sample configuration
+  proxyx web                  open the browser config panel (http://127.0.0.1:8787)
 
 Designed for developers and sysadmins who need more than just a reverse proxy, ProxyX combines performance, flexibility, and ease-of-use in one tool.`,
 	}
@@ -36,16 +43,16 @@ Designed for developers and sysadmins who need more than just a reverse proxy, P
 		serviceConfig: "/etc/proxyx/conf.d",
 	}
 
-	cli.root.AddCommand(cli.certCmd())
-
 	// apply and delete are subcommands of `config` (see configCmd).
 	cli.root.AddCommand(cli.configCmd())
+	cli.root.AddCommand(cli.webCmd())
+	cli.root.AddCommand(cli.certCmd())
 	cli.root.AddCommand(cli.healthCheckCmd())
+	cli.root.AddCommand(cli.startCmd())
 	cli.root.AddCommand(cli.restartCmd())
 	cli.root.AddCommand(cli.stopCmd())
 	cli.root.AddCommand(cli.statusCmd())
 	cli.root.AddCommand(cli.versionCmd())
-	cli.root.AddCommand(cli.startCmd())
 	return cli
 
 }
