@@ -33,7 +33,11 @@ and swapped atomically, with no process restart and no dropped connections.
 
 ## Enabling / disabling and changing the port
 
-The panel is configured in the global config, `/etc/proxyx/config/config.yaml`:
+The panel is **on by default** — including when the `webPanel` block is absent
+(for example in a `config.yaml` written by an older version). It is turned off
+only by explicitly setting `enabled: false`.
+
+It is configured in the global config, `/etc/proxyx/config/config.yaml`:
 
 ```yaml
 webPanel:

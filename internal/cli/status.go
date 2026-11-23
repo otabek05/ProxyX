@@ -59,17 +59,17 @@ func (c *CLI) printConfig() {
 
 	fmt.Println(strings.Repeat("-", 40))
 
-	// 🌐 Config Panel
+	// 🌐 Config Panel — on by default; off only when explicitly disabled.
 	fmt.Println("🌐 Config Panel")
-	if cfg.WebPanel != nil && cfg.WebPanel.Enabled {
-		port := cfg.WebPanel.Port
-		if port == 0 {
-			port = 8787
+	if cfg.WebPanel != nil && !cfg.WebPanel.Enabled {
+		fmt.Printf("    Status : Disabled\n")
+	} else {
+		port := 8787
+		if cfg.WebPanel != nil && cfg.WebPanel.Port > 0 {
+			port = cfg.WebPanel.Port
 		}
 		fmt.Printf("    Status : Enabled (runs with the service)\n")
 		fmt.Printf("    URL    : http://127.0.0.1:%d  (localhost only)\n", port)
-	} else {
-		fmt.Printf("    Status : Disabled\n")
 	}
 
 	fmt.Println(strings.Repeat("-", 40))
