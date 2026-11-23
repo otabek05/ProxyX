@@ -1,0 +1,71 @@
+name: auto-release
+
+# Release on merge, no PAT required.
+#
+# When a push to main changes the VERSION file to a value that is not yet
+# tagged, this job creates and pushes v<VERSION> and runs GoReleaser to publish
+# the artifacts — all in one job, using the built-in GITHUB_TOKEN.
+#
+# Tag creation and release live in the SAME job on purpose: a tag pushed with
+# GITHUB_TOKEN does not trigger other workflows (anti-recursion), so a separate
+# tag-triggered release would never fire. Doing both here needs no PAT.
+#
+# Can also be run manually from the Actions tab (workflow_dispatch); it releases
+# whatever version VERSION currently names, if that tag does not exist yet.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - VERSION
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve tag from VERSION
+        id: v
+        run: |
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          if [ -z "$VERSION" ]; then
+            echo "VERSION file is empty" >&2
+            exit 1
+          fi
+          TAG="v${VERSION}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "Tag $TAG already exists — nothing to release."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag
+        if: steps.v.outputs.exists == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.v.outputs.tag }}" -m "Release ${{ steps.v.outputs.tag }}"
+          git push origin "${{ steps.v.outputs.tag }}"
+
+      - uses: actions/setup-go@v5
+        if: steps.v.outputs.exists == 'false'
+        with:
+          go-version: stable
+
+      - uses: goreleaser/goreleaser-action@v6
+        if: steps.v.outputs.exists == 'false'
+        with:
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
