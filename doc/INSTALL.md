@@ -4,7 +4,7 @@ This document explains how to install **ProxyX** on supported platforms.
 
 Each section starts by setting a `VERSION` variable — change that one line
 to the release you want, then paste the rest as-is. The latest release is
-[`0.1.6`](https://github.com/otabek05/ProxyX/releases/latest).
+[`0.1.7`](https://github.com/otabek05/ProxyX/releases/latest).
 
 ------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ to the release you want, then paste the rest as-is. The latest release is
 #### AMD64 (x86_64)
 
 ``` bash
-VERSION=0.1.6
+VERSION=0.1.7
 wget https://github.com/otabek05/ProxyX/releases/download/v${VERSION}/proxyx_${VERSION}_linux_amd64.deb
 sudo apt install ./proxyx_${VERSION}_linux_amd64.deb
 ```
@@ -23,7 +23,7 @@ sudo apt install ./proxyx_${VERSION}_linux_amd64.deb
 #### ARM64
 
 ``` bash
-VERSION=0.1.6
+VERSION=0.1.7
 wget https://github.com/otabek05/ProxyX/releases/download/v${VERSION}/proxyx_${VERSION}_linux_arm64.deb
 sudo apt install ./proxyx_${VERSION}_linux_arm64.deb
 ```
@@ -35,7 +35,7 @@ sudo apt install ./proxyx_${VERSION}_linux_arm64.deb
 #### AMD64 (x86_64)
 
 ``` bash
-VERSION=0.1.6
+VERSION=0.1.7
 wget https://github.com/otabek05/ProxyX/releases/download/v${VERSION}/proxyx_${VERSION}_linux_amd64.rpm
 sudo dnf install ./proxyx_${VERSION}_linux_amd64.rpm
 ```
@@ -43,7 +43,7 @@ sudo dnf install ./proxyx_${VERSION}_linux_amd64.rpm
 #### ARM64
 
 ``` bash
-VERSION=0.1.6
+VERSION=0.1.7
 wget https://github.com/otabek05/ProxyX/releases/download/v${VERSION}/proxyx_${VERSION}_linux_arm64.rpm
 sudo dnf install ./proxyx_${VERSION}_linux_arm64.rpm
 ```
@@ -53,6 +53,19 @@ sudo dnf install ./proxyx_${VERSION}_linux_arm64.rpm
 ``` bash
 sudo proxyx --version
 ```
+
+#### ⬆️ Updating
+
+After the first install, upgrade to the latest release in place — no need to
+re-download manually:
+
+``` bash
+sudo proxyx update
+```
+
+It fetches the latest GitHub release, verifies its checksum, replaces the
+binary, and restarts the service. (On Windows, download the latest `.zip`
+instead.)
 
 #### 🧹 Uninstall
 
@@ -72,7 +85,7 @@ Pick the archive for your CPU — `arm64` for Apple Silicon (M1/M2/M3),
 
 ``` bash
 # Apple Silicon
-VERSION=0.1.6
+VERSION=0.1.7
 curl -LO https://github.com/otabek05/ProxyX/releases/download/v${VERSION}/proxyx_${VERSION}_darwin_arm64.tar.gz
 tar -xzf proxyx_${VERSION}_darwin_arm64.tar.gz
 
@@ -121,7 +134,7 @@ Manager (SCM). Pick `amd64` for x64 PCs or `arm64` for ARM devices
 
 ``` powershell
 # 1. Download and unpack the release archive
-$VERSION = "0.1.6"
+$VERSION = "0.1.7"
 Invoke-WebRequest `
   -Uri "https://github.com/otabek05/ProxyX/releases/download/v$VERSION/proxyx_${VERSION}_windows_amd64.zip" `
   -OutFile proxyx.zip

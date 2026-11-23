@@ -18,6 +18,7 @@ TLS certificates, and service state.
 | `config example --global` | Print the global `config.yaml` (timeouts, default rate limit, whitelist) |
 | `web` | Open the browser config panel on `127.0.0.1:8787` (localhost only) |
 | `web --port <n>` | Run the config panel on a different localhost port |
+| `update` | Update ProxyX to the latest GitHub release (checksum-verified, in place) |
 | `cert` | Interactive TLS certificate issuance via Certbot |
 | `restart` | Reload ProxyX configuration |
 | `status` | Check if ProxyX service is running |
