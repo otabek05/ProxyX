@@ -3,19 +3,28 @@ package proxy
 import (
 	"ProxyX/internal/common"
 	"ProxyX/internal/healthchecker"
+	"ProxyX/internal/pkg/config"
+	"ProxyX/internal/webui"
 	"crypto/tls"
 	"fmt"
 	"log"
 	"sync"
+	"sync/atomic"
+
 	"github.com/valyala/fasthttp"
 )
 
+// confDir is where server configurations live (shared with the CLI).
+const confDir = "/etc/proxyx/conf.d"
+
 type ProxyServer struct {
-	router      fasthttp.RequestHandler
+	router      atomic.Value // fasthttp.RequestHandler, swapped on reload
+	configCount atomic.Int32 // number of loaded server configs
 	proxyConfig *common.ProxyConfig
-	config      []common.ServerConfig
+	config      []common.ServerConfig // guarded by reloadMu
 	whitelist   *Whitelist
 
+	reloadMu  sync.Mutex
 	certCache sync.Map
 	proxies   sync.Map
 	wsProxies sync.Map
@@ -28,19 +37,31 @@ func NewServer(config []common.ServerConfig, proxyConfig *common.ProxyConfig) *P
 		whitelist:   NewWhitelist(proxyConfig.Whitelist),
 	}
 
-    p.configureProxy()
+	p.configureProxy()
 	p.configureWSProxy()
 	return p
 }
 
+// dispatch routes a request through the current (atomically swappable) router.
+func (p *ProxyServer) dispatch(ctx *fasthttp.RequestCtx) {
+	if h, ok := p.router.Load().(fasthttp.RequestHandler); ok && h != nil {
+		h(ctx)
+		return
+	}
+	ServeDefault(ctx)
+}
+
 func (p *ProxyServer) Start() error {
-	if err := p.loadAllCertificates(); err != nil {
+	if err := p.loadCertsFor(p.config); err != nil {
 		return err
 	}
 
 	if p.proxyConfig.HealthCheck.Enabled {
 		healthchecker.Start(p.proxyConfig.HealthCheck.Interval)
 	}
+
+	// Localhost-only browser config panel, in the same process as the proxy.
+	p.startWebPanel()
 
 	go p.runHTTP()
 
@@ -50,7 +71,7 @@ func (p *ProxyServer) Start() error {
 	}
 
 	httpsServer := &fasthttp.Server{
-		Handler:            p.router,
+		Handler:            p.dispatch,
 		TLSConfig:          tlsConfig,
 		ReadTimeout:        p.proxyConfig.HTTPS.ReadTimeout,
 		WriteTimeout:       p.proxyConfig.HTTPS.WriteTimeout,
@@ -72,22 +93,65 @@ func (p *ProxyServer) Start() error {
 	return httpsServer.ListenAndServeTLS(":443", "", "")
 }
 
-func (p *ProxyServer) loadAllCertificates() error {
-	for _, srv := range p.config {
+// startWebPanel launches the localhost config panel in a goroutine, if enabled.
+func (p *ProxyServer) startWebPanel() {
+	wp := p.proxyConfig.WebPanel
+	if wp == nil || !wp.Enabled {
+		return
+	}
+	port := wp.Port
+	if port < 1 || port > 65535 {
+		port = 8787
+	}
+	panel := &webui.Server{Dir: confDir, Restart: p.Reload}
+	go func() {
+		log.Printf("Config panel running on http://127.0.0.1:%d (localhost only)", port)
+		if err := panel.ListenAndServe(port); err != nil {
+			log.Printf("config panel stopped: %v", err)
+		}
+	}()
+}
+
+// Reload re-reads the configurations from disk and swaps the router in place,
+// without restarting the process. The browser config panel calls this after a
+// change. On any error the previous configuration stays active.
+func (p *ProxyServer) Reload() error {
+	p.reloadMu.Lock()
+	defer p.reloadMu.Unlock()
+
+	cfgs, err := config.LoadConfig()
+	if err != nil {
+		return err
+	}
+	handler, err := p.buildRouter(cfgs)
+	if err != nil {
+		return err
+	}
+	if err := p.loadCertsFor(cfgs); err != nil {
+		return err
+	}
+	p.config = cfgs
+	p.configureWSProxy()
+	p.router.Store(handler)
+	p.configCount.Store(int32(len(cfgs)))
+	log.Printf("configuration reloaded: %d server(s)", len(cfgs))
+	return nil
+}
+
+// loadCertsFor loads TLS certificates for the given configs into the cache.
+func (p *ProxyServer) loadCertsFor(cfgs []common.ServerConfig) error {
+	for _, srv := range cfgs {
 		if srv.Spec.TLS == nil {
 			continue
 		}
-
 		cert, err := tls.LoadX509KeyPair(srv.Spec.TLS.CertFile, srv.Spec.TLS.KeyFile)
 		if err != nil {
-			fmt.Printf("TLS load failed for %s: %v", srv.Spec.Domain, err)
+			log.Printf("TLS load failed for %s: %v", srv.Spec.Domain, err)
 			continue
 		}
-
 		p.certCache.Store(srv.Spec.Domain, &cert)
 		log.Println("Loaded TLS for:", srv.Spec.Domain)
 	}
-
 	return nil
 }
 
@@ -103,7 +167,7 @@ func (p *ProxyServer) getCertificate(tslHello *tls.ClientHelloInfo) (*tls.Certif
 
 func (p *ProxyServer) runHTTP() {
 	handler := func(ctx *fasthttp.RequestCtx) {
-		if len(p.config) == 0 {
+		if p.configCount.Load() == 0 {
 			ctx.SetStatusCode(fasthttp.StatusOK)
 			ServeDefault(ctx)
 			return
@@ -115,7 +179,7 @@ func (p *ProxyServer) runHTTP() {
 			return
 		}
 
-		p.router(ctx)
+		p.dispatch(ctx)
 	}
 
 	log.Println("HTTP Proxy server running on :80")

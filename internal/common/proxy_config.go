@@ -15,6 +15,17 @@ type ProxyConfig struct {
 	// Whitelist controls global IP access: either exempting trusted IPs from
 	// rate limiting (mode: bypass) or restricting access to them (mode: allow).
 	Whitelist *WhitelistConfig `yaml:"whitelist"`
+
+	// WebPanel is the localhost-only browser config panel that runs alongside
+	// the proxy service.
+	WebPanel *WebPanelConfig `yaml:"webPanel"`
+}
+
+// WebPanelConfig configures the browser config panel that runs inside the proxy
+// service (localhost only).
+type WebPanelConfig struct {
+	Enabled bool `yaml:"enabled"` // run the panel with the service (default true)
+	Port    int  `yaml:"port"`    // localhost port (default 8787)
 }
 
 // Whitelist modes.

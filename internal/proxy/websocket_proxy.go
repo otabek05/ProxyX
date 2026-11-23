@@ -21,9 +21,10 @@ func (p *ProxyServer) configureWSProxy() {
 				continue
 			}
 
-		   customProxy, err := newWsProxyInstance(r.Websocket.URL)
+			customProxy, err := newWsProxyInstance(r.Websocket.URL)
 			if err != nil {
-				log.Fatal(err)
+				log.Printf("WebSocket proxy setup failed for %s: %v", domain, err)
+				continue
 			}
 
 			p.wsProxies.Store(domain, customProxy)

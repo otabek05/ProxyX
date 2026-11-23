@@ -86,4 +86,9 @@ whitelist:
   ips:
     - 127.0.0.1
     - 10.0.0.0/8
+
+# Browser config panel. Runs inside the proxy service, bound to localhost only.
+webPanel:
+  enabled: true
+  port: 8787
 `

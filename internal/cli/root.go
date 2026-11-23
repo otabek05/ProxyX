@@ -3,8 +3,8 @@ package cli
 import (
 	"ProxyX/internal/platform"
 	"fmt"
-	"os"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 type CLI struct {
@@ -23,7 +23,7 @@ func NewCLI(service platform.Service) *CLI {
 
 With ProxyX, you can:
 - 📄 Manage proxy configurations as YAML — list, apply, delete, and print samples
-- 🌐 Edit configs in your browser with a localhost-only panel (proxyx web)
+- 🌐 Edit configs in your browser — a localhost-only panel runs with the service
 - 🔐 Issue and manage SSL/TLS certificates
 - 📊 Monitor service health and status
 - 🔄 Start, stop, and restart proxy instances
@@ -32,7 +32,7 @@ Common commands:
   proxyx config list          show configurations
   proxyx config apply <file>  apply a configuration
   proxyx config example       print a sample configuration
-  proxyx web                  open the browser config panel (http://127.0.0.1:8787)
+  proxyx start                start the proxy (serves the config panel at http://127.0.0.1:8787)
 
 Designed for developers and sysadmins who need more than just a reverse proxy, ProxyX combines performance, flexibility, and ease-of-use in one tool.`,
 	}
@@ -45,7 +45,6 @@ Designed for developers and sysadmins who need more than just a reverse proxy, P
 
 	// apply and delete are subcommands of `config` (see configCmd).
 	cli.root.AddCommand(cli.configCmd())
-	cli.root.AddCommand(cli.webCmd())
 	cli.root.AddCommand(cli.certCmd())
 	cli.root.AddCommand(cli.healthCheckCmd())
 	cli.root.AddCommand(cli.startCmd())
@@ -75,4 +74,3 @@ func requireRoot(cmd *cobra.Command, args []string) {
 		os.Exit(1)
 	}
 }
-

@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"ProxyX/internal/common"
+	"fmt"
 	"sort"
 	"time"
 
@@ -14,19 +15,32 @@ type routeInfo struct {
 	routeConfig  *common.RouteConfig
 }
 
-func (p *ProxyServer) configureProxy()  {
+// configureProxy builds the initial router and stores it. It panics on a bad
+// configuration at startup (preserving the original fail-fast behavior).
+func (p *ProxyServer) configureProxy() {
+	handler, err := p.buildRouter(p.config)
+	if err != nil {
+		panic(err)
+	}
+	p.router.Store(handler)
+	p.configCount.Store(int32(len(p.config)))
+}
+
+// buildRouter builds a request handler for the given configs. Unlike the
+// startup path it returns an error instead of panicking, so a reload triggered
+// at runtime can fail safely and keep the previous router.
+func (p *ProxyServer) buildRouter(configs []common.ServerConfig) (fasthttp.RequestHandler, error) {
 	servers := make(map[string][]routeInfo)
 
-	for _, server := range p.config {
+	for _, server := range configs {
 		if server.Spec.Domain == "" {
-			panic("Domain must be specified ")
+			return nil, fmt.Errorf("a configuration is missing its domain")
 		}
 
 		rlCfg := p.rateLimitFor(&server)
 		rl := NewRateLimiter(rlCfg.Requests, time.Duration(rlCfg.WindowSeconds)*time.Second)
 		var routes []routeInfo
 		for _, route := range server.Spec.Routes {
-
 			if route.Type == "" {
 				route.Type = common.RouteReverseProxy
 			}
@@ -36,7 +50,7 @@ func (p *ProxyServer) configureProxy()  {
 				var err error
 				lb, err = NewLoadBalancer(route.ReverseProxy.Servers, p.proxyConfig)
 				if err != nil {
-					panic(err)
+					return nil, err
 				}
 			}
 
@@ -50,9 +64,9 @@ func (p *ProxyServer) configureProxy()  {
 		servers[server.Spec.Domain] = routes
 	}
 
-	p.router = func(ctx *fasthttp.RequestCtx) {
+	return func(ctx *fasthttp.RequestCtx) {
 		p.handleRequest(ctx, servers)
-	}
+	}, nil
 }
 
 // rateLimitFor resolves the rate limit for a server: its own spec wins, else the

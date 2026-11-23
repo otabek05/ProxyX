@@ -59,6 +59,21 @@ func (c *CLI) printConfig() {
 
 	fmt.Println(strings.Repeat("-", 40))
 
+	// 🌐 Config Panel
+	fmt.Println("🌐 Config Panel")
+	if cfg.WebPanel != nil && cfg.WebPanel.Enabled {
+		port := cfg.WebPanel.Port
+		if port == 0 {
+			port = 8787
+		}
+		fmt.Printf("    Status : Enabled (runs with the service)\n")
+		fmt.Printf("    URL    : http://127.0.0.1:%d  (localhost only)\n", port)
+	} else {
+		fmt.Printf("    Status : Disabled\n")
+	}
+
+	fmt.Println(strings.Repeat("-", 40))
+
 	// 🔐 Certbot
 	fmt.Println("🔐 Certbot")
 	fmt.Printf("  Email : %s\n", cfg.Certbot.Email)

@@ -103,5 +103,9 @@ func defaultConfig() common.ProxyConfig {
 			Mode: common.WhitelistBypass,
 			IPs:  []string{},
 		},
+		WebPanel: &common.WebPanelConfig{
+			Enabled: true,
+			Port:    8787,
+		},
 	}
 }
