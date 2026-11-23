@@ -1,0 +1,50 @@
+name: tag-on-version
+
+# When a push to main changes the VERSION file to a value that has no matching
+# tag yet, create and push that tag. The tag push then triggers release.yaml,
+# which runs GoReleaser and publishes the build artifacts.
+#
+# The tag is pushed with secrets.TOKEN (a PAT) on purpose: a tag pushed with the
+# default GITHUB_TOKEN would NOT trigger the release workflow.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - VERSION
+
+permissions:
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.TOKEN }}
+
+      - name: Read version
+        id: v
+        run: |
+          VERSION="$(tr -d '[:space:]' < VERSION)"
+          if [ -z "$VERSION" ]; then
+            echo "VERSION file is empty" >&2
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create and push tag if it does not exist
+        run: |
+          TAG="v${{ steps.v.outputs.version }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists — nothing to release."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Release $TAG"
+          git push origin "$TAG"
+          echo "Pushed $TAG — release workflow will build and publish it."
