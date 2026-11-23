@@ -93,15 +93,18 @@ func (p *ProxyServer) Start() error {
 	return httpsServer.ListenAndServeTLS(":443", "", "")
 }
 
-// startWebPanel launches the localhost config panel in a goroutine, if enabled.
+// startWebPanel launches the localhost config panel in a goroutine. The panel
+// is on by default: it is skipped only when config.yaml explicitly sets
+// webPanel.enabled to false. An absent webPanel block (e.g. a config.yaml
+// written by an older version) still enables it.
 func (p *ProxyServer) startWebPanel() {
 	wp := p.proxyConfig.WebPanel
-	if wp == nil || !wp.Enabled {
-		return
+	if wp != nil && !wp.Enabled {
+		return // explicitly disabled
 	}
-	port := wp.Port
-	if port < 1 || port > 65535 {
-		port = 8787
+	port := 8787
+	if wp != nil && wp.Port > 0 && wp.Port <= 65535 {
+		port = wp.Port
 	}
 	panel := &webui.Server{Dir: confDir, Restart: p.Reload}
 	go func() {
