@@ -53,6 +53,7 @@ ProxyX includes a full lifecycle management CLI for:
 - Applying and deleting configs
 - Managing TLS certificates
 - Controlling the ProxyX service
+- Self-updating to the latest release (`sudo proxyx update`)
 
 For full command reference and usage examples, see: [CLI Tool Guide](doc/CLI.md)
 

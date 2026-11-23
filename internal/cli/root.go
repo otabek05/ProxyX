@@ -52,6 +52,7 @@ Designed for developers and sysadmins who need more than just a reverse proxy, P
 	cli.root.AddCommand(cli.restartCmd())
 	cli.root.AddCommand(cli.stopCmd())
 	cli.root.AddCommand(cli.statusCmd())
+	cli.root.AddCommand(cli.updateCmd())
 	cli.root.AddCommand(cli.versionCmd())
 	return cli
 
