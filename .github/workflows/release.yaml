@@ -1,5 +1,9 @@
 name: release
 
+# Publishes a release when a tag like v1.2.3 is pushed manually
+# (e.g. git tag v0.1.6 && git push origin v0.1.6). Merge-driven releases go
+# through auto-release.yaml instead; this one is the manual escape hatch.
+
 on:
   push:
     tags:
@@ -25,5 +29,5 @@ jobs:
           version: latest
           args: release --clean
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
