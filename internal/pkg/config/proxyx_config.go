@@ -10,30 +10,34 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-
-func LoadProxyXConfig() (*common.ProxyConfig, error ) {
+func LoadProxyXConfig() (*common.ProxyConfig, error) {
 	path := "/etc/proxyx/config/config.yaml"
 
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
 		if err := createDefaultProxyConfig(path); err != nil {
-			return nil, err 
+			return nil, err
 		}
-	} 
+	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, err 
+		return nil, err
 	}
 
-	var config common.ProxyConfig
+	// Start from the defaults and unmarshal the file on top. YAML overwrites
+	// only the keys actually present in the file, so the user's settings win
+	// while any key their file omits (e.g. a block added by a newer version,
+	// like webPanel) inherits its default instead of becoming nil/zero. This
+	// is what lets an old config.yaml pick up new features after an upgrade
+	// without the user hand-editing the file.
+	config := defaultConfig()
 	err = yaml.Unmarshal(data, &config)
 	if err != nil {
-	  return nil, err 
+		return nil, err
 	}
 
 	return &config, nil
 }
-
 
 func SaveProxyXConfig(cfg *common.ProxyConfig) error {
 	path := "/etc/proxyx/config/config.yaml"
@@ -44,7 +48,7 @@ func SaveProxyXConfig(cfg *common.ProxyConfig) error {
 	}
 
 	tmp := path + ".tmp"
-	err  = os.WriteFile(tmp, data, 0644 )
+	err = os.WriteFile(tmp, data, 0644)
 	if err != nil {
 		return err
 	}
@@ -52,27 +56,24 @@ func SaveProxyXConfig(cfg *common.ProxyConfig) error {
 	return os.Rename(tmp, path)
 }
 
-
-func createDefaultProxyConfig(path string ) error  {
+func createDefaultProxyConfig(path string) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return err 
+		return err
 	}
 
 	cfg := defaultConfig()
 	data, err := yaml.Marshal(cfg)
 	if err != nil {
-		return err 
+		return err
 	}
 
 	tmp := path + ".tmp"
 	if err := os.WriteFile(tmp, data, 0644); err != nil {
-		return err 
+		return err
 	}
 
 	return os.Rename(tmp, path)
 }
-
-
 
 func defaultConfig() common.ProxyConfig {
 	return common.ProxyConfig{
