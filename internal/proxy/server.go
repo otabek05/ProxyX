@@ -24,6 +24,11 @@ type ProxyServer struct {
 	config      []common.ServerConfig // guarded by reloadMu
 	whitelist   *Whitelist
 
+	// Cumulative traffic counters, read by the config panel's live meter.
+	bytesIn  atomic.Int64
+	bytesOut atomic.Int64
+	requests atomic.Int64
+
 	reloadMu  sync.Mutex
 	certCache sync.Map
 	proxies   sync.Map
@@ -46,9 +51,10 @@ func NewServer(config []common.ServerConfig, proxyConfig *common.ProxyConfig) *P
 func (p *ProxyServer) dispatch(ctx *fasthttp.RequestCtx) {
 	if h, ok := p.router.Load().(fasthttp.RequestHandler); ok && h != nil {
 		h(ctx)
-		return
+	} else {
+		ServeDefault(ctx)
 	}
-	ServeDefault(ctx)
+	p.countTraffic(ctx)
 }
 
 func (p *ProxyServer) Start() error {
@@ -106,7 +112,14 @@ func (p *ProxyServer) startWebPanel() {
 	if wp != nil && wp.Port > 0 && wp.Port <= 65535 {
 		port = wp.Port
 	}
-	panel := &webui.Server{Dir: confDir, Restart: p.Reload}
+	panel := &webui.Server{
+		Dir:     confDir,
+		Restart: p.Reload,
+		Metrics: func() (in, out, req int64) {
+			m := p.Metrics()
+			return m.BytesIn, m.BytesOut, m.Requests
+		},
+	}
 	go func() {
 		log.Printf("Config panel running on http://127.0.0.1:%d (localhost only)", port)
 		if err := panel.ListenAndServe(port); err != nil {

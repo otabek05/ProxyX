@@ -14,6 +14,57 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+// GlobalPath is the global proxy configuration file (rate limit, whitelist,
+// web panel, timeouts). It is the same path pkg/config loads at startup.
+const GlobalPath = "/etc/proxyx/config/config.yaml"
+
+// ValidateServer parses and validates a server config without writing it. It is
+// used by the panel's "Check" button to report whether an uploaded or edited
+// file is correct.
+func ValidateServer(data []byte) (*common.ServerConfig, error) {
+	var server common.ServerConfig
+	if err := yaml.Unmarshal(data, &server); err != nil {
+		return nil, fmt.Errorf("invalid YAML: %w", err)
+	}
+	if err := Validate(&server); err != nil {
+		return nil, err
+	}
+	return &server, nil
+}
+
+// RawGlobal returns the raw bytes of the global config file.
+func RawGlobal() ([]byte, error) {
+	return os.ReadFile(GlobalPath)
+}
+
+// ValidateGlobal parses the global config strictly (rejecting unknown keys, so
+// typos are caught) without writing it.
+func ValidateGlobal(data []byte) error {
+	var cfg common.ProxyConfig
+	if err := yaml.UnmarshalStrict(data, &cfg); err != nil {
+		return fmt.Errorf("invalid global config: %w", err)
+	}
+	return nil
+}
+
+// ApplyGlobal validates and writes the global config file atomically. The
+// service must be restarted for the new values to take effect (rate limit,
+// whitelist, and web-panel settings are read only at startup), so the caller
+// does not trigger an in-process reload here.
+func ApplyGlobal(data []byte) error {
+	if err := ValidateGlobal(data); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(GlobalPath), 0o755); err != nil {
+		return fmt.Errorf("failed to create config directory: %w", err)
+	}
+	tmp := GlobalPath + ".tmp"
+	if err := os.WriteFile(tmp, data, 0o644); err != nil {
+		return fmt.Errorf("failed to write global config: %w", err)
+	}
+	return os.Rename(tmp, GlobalPath)
+}
+
 // Summary is a lightweight view of a config for listings.
 type Summary struct {
 	Name      string `json:"name"`

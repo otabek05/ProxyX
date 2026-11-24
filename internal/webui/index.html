@@ -8,6 +8,7 @@
   :root {
     --bg: #0f141b; --panel: #161d27; --border: #26303d; --text: #e6edf3;
     --muted: #8b98a5; --accent: #3b82f6; --green: #22c55e; --red: #ef4444;
+    --amber: #f59e0b; --cyan: #06b6d4;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   }
   * { box-sizing: border-box; }
@@ -16,15 +17,24 @@
     background: var(--bg); color: var(--text); height: 100vh; display: flex; flex-direction: column;
   }
   header {
-    padding: 12px 18px; border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; gap: 10px;
+    padding: 10px 18px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
   }
   header h1 { font-size: 16px; margin: 0; font-weight: 600; }
   header .badge {
     font-size: 11px; color: var(--muted); border: 1px solid var(--border);
     padding: 2px 8px; border-radius: 999px;
   }
+  nav { display: flex; gap: 4px; margin-left: 8px; }
+  nav button {
+    font: inherit; font-size: 13px; padding: 6px 14px; border-radius: 7px;
+    border: 1px solid transparent; background: transparent; color: var(--muted); cursor: pointer;
+  }
+  nav button:hover { color: var(--text); }
+  nav button.active { background: var(--panel); border-color: var(--border); color: var(--text); }
   main { flex: 1; display: flex; min-height: 0; }
+  .view { flex: 1; display: none; min-height: 0; }
+  .view.active { display: flex; }
   aside {
     width: 280px; border-right: 1px solid var(--border); overflow-y: auto;
     padding: 12px; flex-shrink: 0;
@@ -56,65 +66,146 @@
   .status { font-size: 13px; margin-left: auto; font-family: var(--mono); }
   .status.ok { color: var(--green); }
   .status.err { color: var(--red); }
+  .status.warn { color: var(--amber); }
   .empty { color: var(--muted); font-size: 13px; padding: 8px 2px; }
+  .hint { font-size: 12px; color: var(--muted); margin: 0 0 10px; }
+  /* Traffic view */
+  .traffic { flex-direction: column; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin-bottom: 14px; }
+  .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
+  .card .label { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  .card .value { font-size: 24px; font-weight: 700; font-family: var(--mono); margin-top: 6px; }
+  .card.in .value { color: var(--cyan); }
+  .card.out .value { color: var(--green); }
+  .card .sub { font-size: 12px; color: var(--muted); font-family: var(--mono); margin-top: 2px; }
+  .chartwrap { flex: 1; background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 12px; min-height: 0; display: flex; flex-direction: column; }
+  .legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+  canvas { flex: 1; width: 100%; min-height: 0; }
 </style>
 </head>
 <body>
 <header>
   <h1>🧭 ProxyX Config Panel</h1>
   <span class="badge">localhost only</span>
+  <nav>
+    <button data-tab="servers" class="active">🗂 Servers</button>
+    <button data-tab="global">⚙️ Global</button>
+    <button data-tab="traffic">📈 Traffic</button>
+  </nav>
 </header>
 <main>
-  <aside>
-    <div class="row">
-      <h2>Configurations</h2>
-      <button id="refresh" title="Reload">↻</button>
-    </div>
-    <div id="list"></div>
-  </aside>
-  <section>
-    <div class="toolbar">
-      <button id="new">＋ New</button>
-      <button id="example">📝 Load example</button>
-      <button id="apply" class="primary">⚡ Apply</button>
-      <button id="delete" class="danger">🗑 Delete</button>
-      <span id="status" class="status"></span>
-    </div>
-    <textarea id="editor" spellcheck="false" placeholder="Select a configuration, or click “New” / “Load example” to start…"></textarea>
-  </section>
+  <!-- ===== Servers ===== -->
+  <div class="view active" data-view="servers">
+    <aside>
+      <div class="row">
+        <h2>Configurations</h2>
+        <button id="refresh" title="Reload">↻</button>
+      </div>
+      <div id="list"></div>
+    </aside>
+    <section>
+      <div class="toolbar">
+        <button id="new">＋ New</button>
+        <button id="example">📝 Load example</button>
+        <button id="upload">📂 Upload file</button>
+        <button id="check">✔ Check</button>
+        <button id="apply" class="primary">⚡ Apply</button>
+        <button id="delete" class="danger">🗑 Delete</button>
+        <span id="status" class="status"></span>
+      </div>
+      <textarea id="editor" spellcheck="false" placeholder="Select a configuration, or click “New” / “Load example” / “Upload file” to start…"></textarea>
+    </section>
+  </div>
+
+  <!-- ===== Global ===== -->
+  <div class="view" data-view="global">
+    <section>
+      <p class="hint">Global config (<code>/etc/proxyx/config/config.yaml</code>): rate limit, IP whitelist, web panel, timeouts. Changes here need a service restart — <code>sudo proxyx restart</code> — to take effect.</p>
+      <div class="toolbar">
+        <button id="gReload">↻ Reload</button>
+        <button id="gExample">📝 Load example</button>
+        <button id="gUpload">📂 Upload file</button>
+        <button id="gCheck">✔ Check</button>
+        <button id="gSave" class="primary">💾 Save</button>
+        <span id="gStatus" class="status"></span>
+      </div>
+      <textarea id="gEditor" spellcheck="false" placeholder="Loading global config…"></textarea>
+    </section>
+  </div>
+
+  <!-- ===== Traffic ===== -->
+  <div class="view traffic" data-view="traffic">
+    <section class="traffic">
+      <div class="toolbar">
+        <button id="tToggle" class="primary">▶ Start</button>
+        <span class="hint" style="margin:0">Live, server-wide proxy traffic (approximate: headers + in-memory body).</span>
+        <span id="tStatus" class="status"></span>
+      </div>
+      <div class="cards">
+        <div class="card in"><div class="label">⬇ Incoming speed</div><div class="value" id="inRate">—</div><div class="sub" id="inTotal">0 B total</div></div>
+        <div class="card out"><div class="label">⬆ Outgoing speed</div><div class="value" id="outRate">—</div><div class="sub" id="outTotal">0 B total</div></div>
+        <div class="card"><div class="label">Requests</div><div class="value" id="reqTotal">0</div><div class="sub" id="reqRate">0 /s</div></div>
+      </div>
+      <div class="chartwrap">
+        <div class="legend">
+          <span><span class="dot" style="background:var(--cyan)"></span>Incoming</span>
+          <span><span class="dot" style="background:var(--green)"></span>Outgoing</span>
+          <span style="margin-left:auto">per second, last 60s</span>
+        </div>
+        <canvas id="chart"></canvas>
+      </div>
+    </section>
+  </div>
 </main>
+
+<input type="file" id="fileInput" accept=".yaml,.yml,.txt" style="display:none">
+
 <script>
 const $ = (id) => document.getElementById(id);
-let current = null; // metadata.name of the loaded config
 
-function setStatus(msg, kind) {
-  const el = $("status");
-  el.textContent = msg || "";
-  el.className = "status" + (kind ? " " + kind : "");
-}
+/* ---------- tabs ---------- */
+document.querySelectorAll("nav button").forEach((b) => {
+  b.onclick = () => {
+    document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("active", x === b));
+    const tab = b.dataset.tab;
+    document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.dataset.view === tab));
+    if (tab === "global" && !gEditorLoaded) loadGlobal();
+  };
+});
+
+/* ---------- shared file upload ---------- */
+let uploadTarget = "editor";
+$("fileInput").onchange = async (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const text = await f.text();
+  if (uploadTarget === "editor") { $("editor").value = text; current = null; setStatus("Loaded " + f.name + " — click Check or Apply", null); await check(); }
+  else { $("gEditor").value = text; setGStatus("Loaded " + f.name + " — click Check or Save", null); await gCheck(); }
+  e.target.value = "";
+};
+function pickFile(target) { uploadTarget = target; $("fileInput").click(); }
+
+/* ========== SERVERS ========== */
+let current = null;
+function setStatus(msg, kind) { const el = $("status"); el.textContent = msg || ""; el.className = "status" + (kind ? " " + kind : ""); }
 
 async function loadList() {
   const res = await fetch("/api/configs");
   const items = await res.json();
   const list = $("list");
   list.innerHTML = "";
-  if (!items || items.length === 0) {
-    list.innerHTML = '<div class="empty">No configurations yet.</div>';
-    return;
-  }
+  if (!items || items.length === 0) { list.innerHTML = '<div class="empty">No configurations yet.</div>'; return; }
   for (const c of items) {
     const div = document.createElement("div");
     div.className = "cfg";
-    div.innerHTML =
-      '<div class="name"></div><div class="domain"></div>' +
-      '<div class="meta">' + c.routes + ' route(s) · ' + c.file + '</div>';
+    div.innerHTML = '<div class="name"></div><div class="domain"></div><div class="meta">' + c.routes + ' route(s) · ' + c.file + '</div>';
     div.querySelector(".name").textContent = c.name;
     div.querySelector(".domain").textContent = c.domain;
     div.onclick = () => openConfig(c.name);
     list.appendChild(div);
   }
 }
-
 async function openConfig(name) {
   const res = await fetch("/api/configs/" + encodeURIComponent(name));
   if (!res.ok) { setStatus("Failed to load " + name, "err"); return; }
@@ -122,14 +213,21 @@ async function openConfig(name) {
   current = name;
   setStatus("Loaded " + name, "ok");
 }
-
 async function loadExample() {
   const res = await fetch("/api/example");
   $("editor").value = await res.text();
   current = null;
-  setStatus("Example loaded — edit and Apply", null);
+  setStatus("Example loaded — edit, Check, then Apply", null);
 }
-
+async function check() {
+  const body = $("editor").value;
+  if (!body.trim()) { setStatus("Editor is empty", "err"); return false; }
+  const res = await fetch("/api/validate", { method: "POST", body });
+  const data = await res.json();
+  if (!res.ok) { setStatus("✗ " + (data.error || "invalid"), "err"); return false; }
+  setStatus("✓ Valid: " + data.name + " (" + data.domain + ", " + data.routes + " route(s))", "ok");
+  return true;
+}
 async function apply() {
   const body = $("editor").value;
   if (!body.trim()) { setStatus("Editor is empty", "err"); return; }
@@ -137,27 +235,128 @@ async function apply() {
   const res = await fetch("/api/apply", { method: "POST", body });
   const data = await res.json();
   if (!res.ok) { setStatus(data.error || "Apply failed", "err"); return; }
-  setStatus("Applied & restarted ✓", "ok");
+  setStatus("Applied & reloaded ✓", "ok");
   await loadList();
 }
-
 async function removeCurrent() {
   if (!current) { setStatus("Open a saved config first", "err"); return; }
-  if (!confirm("Delete configuration '" + current + "'? This restarts ProxyX.")) return;
+  if (!confirm("Delete configuration '" + current + "'? This reloads ProxyX.")) return;
   const res = await fetch("/api/configs/" + encodeURIComponent(current), { method: "DELETE" });
   const data = await res.json();
   if (!res.ok) { setStatus(data.error || "Delete failed", "err"); return; }
-  $("editor").value = "";
-  setStatus("Deleted '" + current + "' ✓", "ok");
-  current = null;
+  $("editor").value = ""; setStatus("Deleted '" + current + "' ✓", "ok"); current = null;
   await loadList();
 }
-
 $("refresh").onclick = loadList;
-$("new").onclick = () => { $("editor").value = ""; current = null; setStatus("New config — paste YAML or Load example", null); };
+$("new").onclick = () => { $("editor").value = ""; current = null; setStatus("New config — paste YAML, Upload, or Load example", null); };
 $("example").onclick = loadExample;
+$("upload").onclick = () => pickFile("editor");
+$("check").onclick = check;
 $("apply").onclick = apply;
 $("delete").onclick = removeCurrent;
+
+/* ========== GLOBAL ========== */
+let gEditorLoaded = false;
+function setGStatus(msg, kind) { const el = $("gStatus"); el.textContent = msg || ""; el.className = "status" + (kind ? " " + kind : ""); }
+async function loadGlobal() {
+  const res = await fetch("/api/global");
+  if (!res.ok) { const d = await res.json().catch(() => ({})); setGStatus(d.error || "Failed to load global config", "err"); return; }
+  $("gEditor").value = await res.text();
+  gEditorLoaded = true;
+  setGStatus("Loaded", "ok");
+}
+async function gExample() {
+  const res = await fetch("/api/example?global=1");
+  $("gEditor").value = await res.text();
+  setGStatus("Example loaded — edit, Check, then Save", null);
+}
+async function gCheck() {
+  const body = $("gEditor").value;
+  if (!body.trim()) { setGStatus("Editor is empty", "err"); return false; }
+  const res = await fetch("/api/validate?global=1", { method: "POST", body });
+  const data = await res.json();
+  if (!res.ok) { setGStatus("✗ " + (data.error || "invalid"), "err"); return false; }
+  setGStatus("✓ Valid global config", "ok");
+  return true;
+}
+async function gSave() {
+  const body = $("gEditor").value;
+  if (!body.trim()) { setGStatus("Editor is empty", "err"); return; }
+  setGStatus("Saving…", null);
+  const res = await fetch("/api/global", { method: "POST", body });
+  const data = await res.json();
+  if (!res.ok) { setGStatus(data.error || "Save failed", "err"); return; }
+  setGStatus(data.message || "Saved ✓", "warn");
+}
+$("gReload").onclick = loadGlobal;
+$("gExample").onclick = gExample;
+$("gUpload").onclick = () => pickFile("gEditor");
+$("gCheck").onclick = gCheck;
+$("gSave").onclick = gSave;
+
+/* ========== TRAFFIC ========== */
+let ws = null, running = false;
+const MAXPTS = 60;
+const inHist = [], outHist = [];
+function setTStatus(msg, kind) { const el = $("tStatus"); el.textContent = msg || ""; el.className = "status" + (kind ? " " + kind : ""); }
+function fmtBytes(n) {
+  n = Number(n) || 0;
+  const u = ["B", "KB", "MB", "GB", "TB"]; let i = 0;
+  while (n >= 1024 && i < u.length - 1) { n /= 1024; i++; }
+  return (i === 0 ? n : n.toFixed(2)) + " " + u[i];
+}
+function startTraffic() {
+  const proto = location.protocol === "https:" ? "wss" : "ws";
+  ws = new WebSocket(proto + "://" + location.host + "/api/metrics/ws");
+  ws.onopen = () => { running = true; $("tToggle").textContent = "⏹ Stop"; setTStatus("● live", "ok"); };
+  ws.onclose = () => { running = false; $("tToggle").textContent = "▶ Start"; setTStatus("stopped", null); };
+  ws.onerror = () => setTStatus("connection error", "err");
+  ws.onmessage = (ev) => {
+    const m = JSON.parse(ev.data);
+    $("inRate").textContent = fmtBytes(m.inRate) + "/s";
+    $("outRate").textContent = fmtBytes(m.outRate) + "/s";
+    $("inTotal").textContent = fmtBytes(m.bytesIn) + " total";
+    $("outTotal").textContent = fmtBytes(m.bytesOut) + " total";
+    $("reqTotal").textContent = m.requests;
+    inHist.push(m.inRate); outHist.push(m.outRate);
+    if (inHist.length > MAXPTS) { inHist.shift(); outHist.shift(); }
+    if (inHist.length >= 2) {
+      const prevReq = Number($("reqTotal").dataset.prev || m.requests);
+      $("reqRate").textContent = Math.max(0, m.requests - prevReq) + " /s";
+    }
+    $("reqTotal").dataset.prev = m.requests;
+    drawChart();
+  };
+}
+function stopTraffic() { if (ws) ws.close(); }
+$("tToggle").onclick = () => running ? stopTraffic() : startTraffic();
+
+function drawChart() {
+  const c = $("chart"), ctx = c.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const w = c.clientWidth, h = c.clientHeight;
+  c.width = w * dpr; c.height = h * dpr; ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+  const all = inHist.concat(outHist);
+  const max = Math.max(1, ...all);
+  const pad = 6;
+  const line = (data, color) => {
+    if (data.length < 2) return;
+    ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 2;
+    data.forEach((v, i) => {
+      const x = pad + (i / (MAXPTS - 1)) * (w - 2 * pad);
+      const y = h - pad - (v / max) * (h - 2 * pad);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  };
+  const css = getComputedStyle(document.documentElement);
+  line(inHist, css.getPropertyValue("--cyan").trim());
+  line(outHist, css.getPropertyValue("--green").trim());
+}
+window.addEventListener("resize", () => { if (inHist.length) drawChart(); });
+
+/* ---------- boot ---------- */
 loadList();
 </script>
 </body>

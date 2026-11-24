@@ -1,7 +1,8 @@
-// Package webui is the localhost-only browser config panel started by
-// `proxyx web`. It lets you view, create, edit, apply, and delete server
-// configurations from a browser, reusing internal/configmgr so it behaves
-// exactly like the CLI. It binds to the loopback interfaces only (IPv4
+// Package webui is the localhost-only browser config panel that runs inside
+// the proxy service. It lets you view, create, edit, apply, and delete server
+// configurations (and the global config) from a browser, plus watch live
+// traffic, reusing internal/configmgr so it behaves exactly like the CLI. It
+// binds to the loopback interfaces only (IPv4
 // 127.0.0.1 and IPv6 ::1) and additionally refuses any non-loopback client,
 // so it is never reachable from the network.
 package webui
@@ -15,6 +16,8 @@ import (
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/gorilla/websocket"
 )
 
 //go:embed index.html
@@ -25,7 +28,16 @@ const maxBodyBytes = 1 << 20 // 1 MiB is plenty for a config file
 // Server serves the config panel.
 type Server struct {
 	Dir     string       // the conf.d directory
-	Restart func() error // restarts the proxy after a write
+	Restart func() error // reloads the proxy after a write
+	// Metrics returns cumulative traffic counters for the live meter. It may be
+	// nil (then the meter reports zeros).
+	Metrics func() (bytesIn, bytesOut, requests int64)
+}
+
+// wsUpgrader upgrades the live-metrics connection. Origin checks are left open
+// because loopbackOnly already guarantees the request came from this machine.
+var wsUpgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool { return true },
 }
 
 // ListenAndServe binds to both loopback interfaces — IPv4 127.0.0.1 and IPv6
@@ -70,7 +82,12 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("GET /api/configs/{name}", s.get)
 	mux.HandleFunc("DELETE /api/configs/{name}", s.delete)
 	mux.HandleFunc("POST /api/apply", s.apply)
+	mux.HandleFunc("POST /api/validate", s.validate)
 	mux.HandleFunc("GET /api/example", s.example)
+	mux.HandleFunc("GET /api/global", s.getGlobal)
+	mux.HandleFunc("POST /api/global", s.applyGlobal)
+	mux.HandleFunc("GET /api/metrics", s.metrics)
+	mux.HandleFunc("GET /api/metrics/ws", s.metricsWS)
 	return mux
 }
 
@@ -147,6 +164,121 @@ func (s *Server) apply(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "file": file})
+}
+
+// validate checks a config without writing it (the "Check" button). Add
+// ?global=1 to validate the global config instead of a server config.
+func (s *Server) validate(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(io.LimitReader(r.Body, maxBodyBytes))
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	if r.URL.Query().Get("global") == "1" {
+		if err := configmgr.ValidateGlobal(body); err != nil {
+			writeErr(w, http.StatusBadRequest, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "kind": "global"})
+		return
+	}
+	srv, err := configmgr.ValidateServer(body)
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok": true, "kind": "server",
+		"name": srv.Metadata.Name, "domain": srv.Spec.Domain, "routes": len(srv.Spec.Routes),
+	})
+}
+
+// getGlobal returns the raw global config file.
+func (s *Server) getGlobal(w http.ResponseWriter, r *http.Request) {
+	data, err := configmgr.RawGlobal()
+	if err != nil {
+		writeErr(w, http.StatusNotFound, err)
+		return
+	}
+	w.Header().Set("Content-Type", "text/yaml; charset=utf-8")
+	_, _ = w.Write(data)
+}
+
+// applyGlobal validates and writes the global config. It does NOT restart the
+// service: rate limit, whitelist, and panel settings are read only at startup,
+// so it reports that a restart is required to apply them.
+func (s *Server) applyGlobal(w http.ResponseWriter, r *http.Request) {
+	body, err := io.ReadAll(io.LimitReader(r.Body, maxBodyBytes))
+	if err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	if err := configmgr.ApplyGlobal(body); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"ok":              true,
+		"restartRequired": true,
+		"message":         "Saved. Restart the service to apply: sudo proxyx restart",
+	})
+}
+
+// metrics returns the current cumulative traffic counters (poll fallback for
+// the live meter when a WebSocket is unavailable).
+func (s *Server) metrics(w http.ResponseWriter, r *http.Request) {
+	var in, out, req int64
+	if s.Metrics != nil {
+		in, out, req = s.Metrics()
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"bytesIn": in, "bytesOut": out, "requests": req})
+}
+
+// metricsWS streams traffic counters once per second over a WebSocket, adding
+// per-second deltas (inRate/outRate) so the browser can show live speed.
+func (s *Server) metricsWS(w http.ResponseWriter, r *http.Request) {
+	conn, err := wsUpgrader.Upgrade(w, r, nil)
+	if err != nil {
+		return
+	}
+	defer conn.Close()
+
+	// Drain anything the client sends so a close is detected promptly.
+	go func() {
+		for {
+			if _, _, err := conn.ReadMessage(); err != nil {
+				conn.Close()
+				return
+			}
+		}
+	}()
+
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+
+	var lastIn, lastOut int64
+	first := true
+	for range ticker.C {
+		var in, out, req int64
+		if s.Metrics != nil {
+			in, out, req = s.Metrics()
+		}
+		var inRate, outRate int64
+		if !first {
+			inRate = in - lastIn
+			outRate = out - lastOut
+		}
+		first = false
+		lastIn, lastOut = in, out
+
+		_ = conn.SetWriteDeadline(time.Now().Add(5 * time.Second))
+		if err := conn.WriteJSON(map[string]any{
+			"bytesIn": in, "bytesOut": out, "requests": req,
+			"inRate": inRate, "outRate": outRate,
+		}); err != nil {
+			return
+		}
+	}
 }
 
 func (s *Server) example(w http.ResponseWriter, r *http.Request) {
