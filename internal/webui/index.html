@@ -8,8 +8,13 @@
   :root {
     --bg: #0f141b; --panel: #161d27; --border: #26303d; --text: #e6edf3;
     --muted: #8b98a5; --accent: #3b82f6; --green: #22c55e; --red: #ef4444;
-    --amber: #f59e0b; --cyan: #06b6d4;
+    --amber: #f59e0b; --cyan: #06b6d4; --editor-bg: #0b1016;
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  :root[data-theme="light"] {
+    --bg: #f6f8fa; --panel: #ffffff; --border: #d0d7de; --text: #1f2328;
+    --muted: #656d76; --accent: #0969da; --green: #1a7f37; --red: #cf222e;
+    --amber: #9a6700; --cyan: #0a7ea4; --editor-bg: #ffffff;
   }
   * { box-sizing: border-box; }
   body {
@@ -52,7 +57,7 @@
   section { flex: 1; display: flex; flex-direction: column; padding: 14px; min-width: 0; }
   .toolbar { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
   textarea {
-    flex: 1; width: 100%; resize: none; background: #0b1016; color: var(--text);
+    flex: 1; width: 100%; resize: none; background: var(--editor-bg); color: var(--text);
     border: 1px solid var(--border); border-radius: 8px; padding: 12px;
     font-family: var(--mono); font-size: 13px; line-height: 1.5; tab-size: 2;
   }
@@ -82,6 +87,20 @@
   .legend { display: flex; gap: 16px; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
   .legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
   canvas { flex: 1; width: 100%; min-height: 0; }
+  .spacer { margin-left: auto; }
+  .iconbtn { padding: 6px 10px; }
+  /* TLS view */
+  .tls-email { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+  .tls-email input { font: inherit; font-size: 13px; padding: 7px 10px; border-radius: 7px;
+    border: 1px solid var(--border); background: var(--editor-bg); color: var(--text); min-width: 260px; }
+  table.tls { width: 100%; border-collapse: collapse; }
+  table.tls th, table.tls td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+  table.tls th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+  table.tls td.domain { font-family: var(--mono); }
+  .pill { font-size: 11px; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); }
+  .pill.ok { color: var(--green); border-color: var(--green); }
+  .pill.no { color: var(--muted); }
+  .tls-actions { display: flex; gap: 6px; }
 </style>
 </head>
 <body>
@@ -91,8 +110,10 @@
   <nav>
     <button data-tab="servers" class="active">🗂 Servers</button>
     <button data-tab="global">⚙️ Global</button>
+    <button data-tab="tls">🔐 TLS</button>
     <button data-tab="traffic">📈 Traffic</button>
   </nav>
+  <button id="theme" class="iconbtn spacer" title="Toggle light / dark theme">🌙</button>
 </header>
 <main>
   <!-- ===== Servers ===== -->
@@ -134,6 +155,23 @@
     </section>
   </div>
 
+  <!-- ===== TLS ===== -->
+  <div class="view" data-view="tls">
+    <section>
+      <p class="hint">Issue &amp; renew Let's Encrypt certificates with certbot. The proxy answers the HTTP-01 challenge on port 80 itself (<code>--webroot</code>), so there is <strong>no downtime</strong>. The domain must resolve to this server and port 80 must be reachable from the internet. On success the cert paths are written into the config and the proxy reloads.</p>
+      <div class="tls-email">
+        <label for="tlsEmail">Let's Encrypt email:</label>
+        <input id="tlsEmail" type="email" placeholder="you@example.com" spellcheck="false">
+        <button id="tlsReload">↻ Refresh</button>
+        <span id="tlsStatus" class="status"></span>
+      </div>
+      <table class="tls">
+        <thead><tr><th>Domain</th><th>TLS</th><th>Certificate</th><th></th></tr></thead>
+        <tbody id="tlsRows"><tr><td colspan="4" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </section>
+  </div>
+
   <!-- ===== Traffic ===== -->
   <div class="view traffic" data-view="traffic">
     <section class="traffic">
@@ -171,8 +209,23 @@ document.querySelectorAll("nav button").forEach((b) => {
     const tab = b.dataset.tab;
     document.querySelectorAll(".view").forEach((v) => v.classList.toggle("active", v.dataset.view === tab));
     if (tab === "global" && !gEditorLoaded) loadGlobal();
+    if (tab === "tls") loadTLS();
   };
 });
+
+/* ---------- theme ---------- */
+function applyTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  $("theme").textContent = t === "light" ? "☀️" : "🌙";
+  try { localStorage.setItem("proxyx-theme", t); } catch (e) {}
+}
+(function initTheme() {
+  let t;
+  try { t = localStorage.getItem("proxyx-theme"); } catch (e) {}
+  if (!t) t = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  applyTheme(t);
+})();
+$("theme").onclick = () => applyTheme(document.documentElement.getAttribute("data-theme") === "light" ? "dark" : "light");
 
 /* ---------- shared file upload ---------- */
 let uploadTarget = "editor";
@@ -293,6 +346,71 @@ $("gExample").onclick = gExample;
 $("gUpload").onclick = () => pickFile("gEditor");
 $("gCheck").onclick = gCheck;
 $("gSave").onclick = gSave;
+
+/* ========== TLS ========== */
+function setTlsStatus(msg, kind) { const el = $("tlsStatus"); el.textContent = msg || ""; el.className = "status" + (kind ? " " + kind : ""); }
+async function loadTLS() {
+  setTlsStatus("Loading…", null);
+  const res = await fetch("/api/tls");
+  const data = await res.json();
+  if (!res.ok) { setTlsStatus(data.error || "Failed to load", "err"); return; }
+  if (!$("tlsEmail").value) $("tlsEmail").value = data.email || "";
+  const rows = $("tlsRows");
+  rows.innerHTML = "";
+  if (!data.domains || data.domains.length === 0) {
+    rows.innerHTML = '<tr><td colspan="4" class="empty">No domains configured. Add a server first.</td></tr>';
+    setTlsStatus("", null);
+    return;
+  }
+  for (const d of data.domains) {
+    const tr = document.createElement("tr");
+    const tls = d.hasTLS
+      ? (d.certOK ? '<span class="pill ok">cert present</span>' : '<span class="pill">configured, file missing</span>')
+      : '<span class="pill no">none</span>';
+    const certText = d.certFile || "—";
+    tr.innerHTML =
+      '<td class="domain"></td><td>' + tls + '</td>' +
+      '<td class="domain" style="color:var(--muted);font-size:12px"></td>' +
+      '<td class="tls-actions"></td>';
+    tr.children[0].textContent = d.domain;
+    tr.children[2].textContent = certText;
+    const act = tr.children[3];
+    const issue = document.createElement("button");
+    issue.textContent = d.hasTLS ? "Re-issue" : "Issue";
+    issue.className = "primary";
+    issue.onclick = () => issueCert(d.domain, issue);
+    const renew = document.createElement("button");
+    renew.textContent = "Renew";
+    renew.disabled = !d.hasTLS;
+    renew.onclick = () => renewCert(d.domain, renew);
+    act.append(issue, renew);
+    rows.appendChild(tr);
+  }
+  setTlsStatus("", null);
+}
+async function issueCert(domain, btn) {
+  const email = $("tlsEmail").value.trim();
+  if (!confirm("Issue a Let's Encrypt certificate for '" + domain + "'?\nThe domain must point to this server and port 80 be reachable.")) return;
+  btn.disabled = true;
+  setTlsStatus("Issuing certificate for " + domain + "… (this can take ~30s)", null);
+  const res = await fetch("/api/cert/issue", { method: "POST", body: JSON.stringify({ domain, email }) });
+  const data = await res.json();
+  btn.disabled = false;
+  if (!res.ok) { setTlsStatus("✗ " + (data.error || "issue failed"), "err"); return; }
+  setTlsStatus(data.message || "Issued ✓", "ok");
+  await loadTLS();
+}
+async function renewCert(domain, btn) {
+  btn.disabled = true;
+  setTlsStatus("Renewing certificate for " + domain + "…", null);
+  const res = await fetch("/api/cert/renew", { method: "POST", body: JSON.stringify({ domain }) });
+  const data = await res.json();
+  btn.disabled = false;
+  if (!res.ok) { setTlsStatus("✗ " + (data.error || "renew failed"), "err"); return; }
+  setTlsStatus(data.message || "Renewed ✓", "ok");
+  await loadTLS();
+}
+$("tlsReload").onclick = loadTLS;
 
 /* ========== TRAFFIC ========== */
 let ws = null, running = false;

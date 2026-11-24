@@ -183,6 +183,12 @@ func (p *ProxyServer) getCertificate(tslHello *tls.ClientHelloInfo) (*tls.Certif
 
 func (p *ProxyServer) runHTTP() {
 	handler := func(ctx *fasthttp.RequestCtx) {
+		// Serve Let's Encrypt HTTP-01 challenges before any routing or HTTPS
+		// redirect, so certbot --webroot can validate a domain with no downtime.
+		if maybeServeACME(ctx) {
+			return
+		}
+
 		if p.configCount.Load() == 0 {
 			ctx.SetStatusCode(fasthttp.StatusOK)
 			ServeDefault(ctx)

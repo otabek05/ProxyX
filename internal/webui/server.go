@@ -88,6 +88,9 @@ func (s *Server) routes() http.Handler {
 	mux.HandleFunc("POST /api/global", s.applyGlobal)
 	mux.HandleFunc("GET /api/metrics", s.metrics)
 	mux.HandleFunc("GET /api/metrics/ws", s.metricsWS)
+	mux.HandleFunc("GET /api/tls", s.tlsStatus)
+	mux.HandleFunc("POST /api/cert/issue", s.certIssue)
+	mux.HandleFunc("POST /api/cert/renew", s.certRenew)
 	return mux
 }
 
@@ -279,6 +282,64 @@ func (s *Server) metricsWS(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+}
+
+// tlsStatus returns the current certbot email and the TLS state of every
+// configured domain.
+func (s *Server) tlsStatus(w http.ResponseWriter, r *http.Request) {
+	domains, err := configmgr.Domains(s.Dir)
+	if err != nil {
+		writeErr(w, http.StatusInternalServerError, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{
+		"email":   configmgr.CertEmail(),
+		"webroot": configmgr.AcmeWebroot,
+		"domains": domains,
+	})
+}
+
+// certIssue obtains a Let's Encrypt certificate for a domain via certbot
+// (webroot mode, no downtime), writes the cert paths into its config, and
+// reloads the proxy to pick up the new certificate.
+func (s *Server) certIssue(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Domain string `json:"domain"`
+		Email  string `json:"email"`
+	}
+	if err := json.NewDecoder(io.LimitReader(r.Body, maxBodyBytes)).Decode(&req); err != nil {
+		writeErr(w, http.StatusBadRequest, fmt.Errorf("invalid request: %w", err))
+		return
+	}
+	if err := configmgr.IssueCert(s.Dir, req.Domain, req.Email); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	if err := s.Restart(); err != nil {
+		writeErr(w, http.StatusInternalServerError, fmt.Errorf("certificate issued, but reload failed: %w", err))
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "message": "Certificate issued for " + req.Domain + " ✓"})
+}
+
+// certRenew renews a domain's certificate and reloads the proxy.
+func (s *Server) certRenew(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Domain string `json:"domain"`
+	}
+	if err := json.NewDecoder(io.LimitReader(r.Body, maxBodyBytes)).Decode(&req); err != nil {
+		writeErr(w, http.StatusBadRequest, fmt.Errorf("invalid request: %w", err))
+		return
+	}
+	if err := configmgr.RenewCert(req.Domain); err != nil {
+		writeErr(w, http.StatusBadRequest, err)
+		return
+	}
+	if err := s.Restart(); err != nil {
+		writeErr(w, http.StatusInternalServerError, fmt.Errorf("certificate renewed, but reload failed: %w", err))
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "message": "Certificate renewed for " + req.Domain + " ✓"})
 }
 
 func (s *Server) example(w http.ResponseWriter, r *http.Request) {
