@@ -47,6 +47,32 @@ typos are caught) and writes the file. Unlike server configs, global settings
 are read only at startup, so the panel tells you to restart the service
 (`sudo proxyx restart`) for the change to take effect.
 
+### 🔐 TLS
+
+Issue and renew Let's Encrypt certificates with certbot, straight from the
+browser. The table lists every configured domain with its TLS state (no cert /
+configured / cert present on disk) and an **Issue** / **Re-issue** and **Renew**
+button each. Set the Let's Encrypt account email once (it is saved to the global
+config for next time).
+
+Issuing uses **certbot in webroot mode with no downtime**: the proxy answers the
+HTTP-01 challenge on port 80 itself (served before any routing or HTTPS
+redirect), so the service keeps running throughout. On success the standard
+`/etc/letsencrypt/live/<domain>/` cert and key paths are written into the
+domain's config and the proxy reloads in place to pick up the new certificate.
+
+> Requirements: `certbot` installed, the domain's DNS pointing at this server,
+> and port 80 reachable from the internet. Any certbot error (rate limit, DNS,
+> unreachable) is shown in full.
+
+This complements the CLI `proxyx cert <domain>`, which instead stops the service
+and uses certbot `--standalone`.
+
+### 🎨 Theme
+
+A 🌙 / ☀️ toggle in the header switches between dark and light. The choice is
+remembered per browser; the initial theme follows your OS preference.
+
 ### 📈 Traffic
 
 A live, server-wide traffic meter: incoming and outgoing **speed** (per second),
@@ -103,3 +129,6 @@ The UI is served from `/`; it talks to this JSON API (all localhost only):
 | `POST` | `/api/global` | Validate (strict) and write the global config; restart required to apply |
 | `GET` | `/api/metrics` | Current cumulative traffic counters (poll fallback) |
 | `GET` | `/api/metrics/ws` | WebSocket stream of traffic counters + per-second rates |
+| `GET` | `/api/tls` | Certbot email and per-domain TLS status |
+| `POST` | `/api/cert/issue` | `{domain,email}` — issue a cert (certbot webroot), write paths, reload |
+| `POST` | `/api/cert/renew` | `{domain}` — renew a cert and reload |
