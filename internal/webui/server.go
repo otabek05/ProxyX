@@ -306,12 +306,18 @@ func (s *Server) certIssue(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Domain string `json:"domain"`
 		Email  string `json:"email"`
+		Method string `json:"method"`
+		Plugin string `json:"plugin"`
+		Creds  string `json:"creds"`
 	}
 	if err := json.NewDecoder(io.LimitReader(r.Body, maxBodyBytes)).Decode(&req); err != nil {
 		writeErr(w, http.StatusBadRequest, fmt.Errorf("invalid request: %w", err))
 		return
 	}
-	if err := configmgr.IssueCert(s.Dir, req.Domain, req.Email); err != nil {
+	if err := configmgr.IssueCert(s.Dir, configmgr.CertRequest{
+		Domain: req.Domain, Email: req.Email,
+		Method: req.Method, Plugin: req.Plugin, Creds: req.Creds,
+	}); err != nil {
 		writeErr(w, http.StatusBadRequest, err)
 		return
 	}
