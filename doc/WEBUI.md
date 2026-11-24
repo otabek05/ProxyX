@@ -55,15 +55,29 @@ configured / cert present on disk) and an **Issue** / **Re-issue** and **Renew**
 button each. Set the Let's Encrypt account email once (it is saved to the global
 config for next time).
 
-Issuing uses **certbot in webroot mode with no downtime**: the proxy answers the
-HTTP-01 challenge on port 80 itself (served before any routing or HTTPS
-redirect), so the service keeps running throughout. On success the standard
-`/etc/letsencrypt/live/<domain>/` cert and key paths are written into the
-domain's config and the proxy reloads in place to pick up the new certificate.
+A **Challenge** selector picks how ownership is proven:
 
-> Requirements: `certbot` installed, the domain's DNS pointing at this server,
-> and port 80 reachable from the internet. Any certbot error (rate limit, DNS,
-> unreachable) is shown in full.
+- **HTTP-01 (webroot, default)** — the proxy answers the challenge on port 80
+  itself (served before any routing or HTTPS redirect), so there is **no
+  downtime**. Needs the domain pointing at this server and port 80 reachable
+  from the internet.
+- **DNS-01** — a certbot **DNS plugin** publishes a `TXT` record at
+  `_acme-challenge.<domain>`. Needs **no inbound ports** (works behind NAT or a
+  firewall) and is the only method that can issue **wildcard** certificates. Give
+  the plugin name (e.g. `dns-cloudflare`, `dns-route53`, `dns-google`) and the
+  absolute path to its credentials file. The plugin name is validated against
+  `^dns-[a-z0-9-]+$`, and certbot is run without a shell, so the value can never
+  be a command. Some plugins (e.g. `dns-route53` with an IAM role) need no
+  credentials file — leave it blank.
+
+On success the standard `/etc/letsencrypt/live/<domain>/` cert and key paths are
+written into the domain's config and the proxy reloads in place. Renewal reuses
+whichever challenge method was recorded at issuance.
+
+> Requirements: `certbot` installed (plus the DNS plugin package for DNS-01,
+> e.g. `python3-certbot-dns-cloudflare`). For HTTP-01, DNS pointing here and port
+> 80 reachable. Any certbot error (rate limit, DNS, unreachable, bad token) is
+> shown in full.
 
 This complements the CLI `proxyx cert <domain>`, which instead stops the service
 and uses certbot `--standalone`.
@@ -130,5 +144,5 @@ The UI is served from `/`; it talks to this JSON API (all localhost only):
 | `GET` | `/api/metrics` | Current cumulative traffic counters (poll fallback) |
 | `GET` | `/api/metrics/ws` | WebSocket stream of traffic counters + per-second rates |
 | `GET` | `/api/tls` | Certbot email and per-domain TLS status |
-| `POST` | `/api/cert/issue` | `{domain,email}` — issue a cert (certbot webroot), write paths, reload |
+| `POST` | `/api/cert/issue` | `{domain,email,method,plugin,creds}` — issue a cert (HTTP-01 webroot or DNS-01 plugin), write paths, reload |
 | `POST` | `/api/cert/renew` | `{domain}` — renew a cert and reload |

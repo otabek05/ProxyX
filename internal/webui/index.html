@@ -91,8 +91,10 @@
   .iconbtn { padding: 6px 10px; }
   /* TLS view */
   .tls-email { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
-  .tls-email input { font: inherit; font-size: 13px; padding: 7px 10px; border-radius: 7px;
+  .tls-email input, .tls-email select { font: inherit; font-size: 13px; padding: 7px 10px; border-radius: 7px;
     border: 1px solid var(--border); background: var(--editor-bg); color: var(--text); min-width: 260px; }
+  .tls-email select { min-width: 0; }
+  #dnsOpts { display: none; gap: 8px; align-items: center; }
   table.tls { width: 100%; border-collapse: collapse; }
   table.tls th, table.tls td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
   table.tls th { font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
@@ -158,12 +160,23 @@
   <!-- ===== TLS ===== -->
   <div class="view" data-view="tls">
     <section>
-      <p class="hint">Issue &amp; renew Let's Encrypt certificates with certbot. The proxy answers the HTTP-01 challenge on port 80 itself (<code>--webroot</code>), so there is <strong>no downtime</strong>. The domain must resolve to this server and port 80 must be reachable from the internet. On success the cert paths are written into the config and the proxy reloads.</p>
+      <p class="hint">Issue &amp; renew Let's Encrypt certificates with certbot. <strong>HTTP-01</strong> answers the challenge on port 80 via the proxy (<code>--webroot</code>, no downtime) — needs the domain pointing here and port 80 reachable. <strong>DNS-01</strong> proves control with a TXT record via a certbot DNS plugin — <strong>no inbound ports</strong> (works behind NAT) and supports wildcards. On success the cert paths are written into the config and the proxy reloads.</p>
       <div class="tls-email">
         <label for="tlsEmail">Let's Encrypt email:</label>
         <input id="tlsEmail" type="email" placeholder="you@example.com" spellcheck="false">
         <button id="tlsReload">↻ Refresh</button>
         <span id="tlsStatus" class="status"></span>
+      </div>
+      <div class="tls-email">
+        <label for="tlsMethod">Challenge:</label>
+        <select id="tlsMethod">
+          <option value="http">HTTP-01 (webroot — needs public port 80)</option>
+          <option value="dns">DNS-01 (TXT record — no inbound ports, wildcard-capable)</option>
+        </select>
+        <span id="dnsOpts">
+          <input id="tlsPlugin" placeholder="dns-cloudflare" spellcheck="false" style="min-width:150px" title="certbot DNS plugin name">
+          <input id="tlsCreds" placeholder="/etc/letsencrypt/cloudflare.ini" spellcheck="false" style="min-width:300px" title="absolute path to the plugin credentials file (optional for some plugins, e.g. route53)">
+        </span>
       </div>
       <table class="tls">
         <thead><tr><th>Domain</th><th>TLS</th><th>Certificate</th><th></th></tr></thead>
@@ -388,12 +401,22 @@ async function loadTLS() {
   }
   setTlsStatus("", null);
 }
+$("tlsMethod").onchange = () => { $("dnsOpts").style.display = $("tlsMethod").value === "dns" ? "inline-flex" : "none"; };
 async function issueCert(domain, btn) {
   const email = $("tlsEmail").value.trim();
-  if (!confirm("Issue a Let's Encrypt certificate for '" + domain + "'?\nThe domain must point to this server and port 80 be reachable.")) return;
+  const method = $("tlsMethod").value;
+  const body = { domain, email, method };
+  let note = "The domain must point to this server and port 80 be reachable.";
+  if (method === "dns") {
+    body.plugin = $("tlsPlugin").value.trim();
+    body.creds = $("tlsCreds").value.trim();
+    if (!body.plugin) { setTlsStatus("Enter a DNS plugin name (e.g. dns-cloudflare)", "err"); return; }
+    note = "Using DNS-01 via " + body.plugin + " — a TXT record will be published automatically.";
+  }
+  if (!confirm("Issue a Let's Encrypt certificate for '" + domain + "'?\n" + note)) return;
   btn.disabled = true;
-  setTlsStatus("Issuing certificate for " + domain + "… (this can take ~30s)", null);
-  const res = await fetch("/api/cert/issue", { method: "POST", body: JSON.stringify({ domain, email }) });
+  setTlsStatus("Issuing certificate for " + domain + "… (this can take ~30s" + (method === "dns" ? ", longer with DNS propagation" : "") + ")", null);
+  const res = await fetch("/api/cert/issue", { method: "POST", body: JSON.stringify(body) });
   const data = await res.json();
   btn.disabled = false;
   if (!res.ok) { setTlsStatus("✗ " + (data.error || "issue failed"), "err"); return; }

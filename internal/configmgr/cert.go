@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -101,18 +102,41 @@ func mustDomains(dir string) []DomainTLS {
 	return d
 }
 
-// IssueCert obtains a Let's Encrypt certificate for domain using certbot in
-// webroot mode (no downtime — the proxy serves the HTTP-01 challenge on :80),
+// dnsPluginRe matches a certbot DNS plugin name such as "dns-cloudflare" or
+// "dns-google". Constraining it keeps an arbitrary string out of the certbot
+// command line.
+var dnsPluginRe = regexp.MustCompile(`^dns-[a-z0-9]+(-[a-z0-9]+)*$`)
+
+// CertRequest describes a certificate request. Method is "http" (HTTP-01 via
+// the proxy's webroot, needs public port 80 — the default) or "dns" (DNS-01 via
+// a certbot DNS plugin, needs no inbound ports and supports wildcards). Plugin
+// and Creds apply only to the DNS method.
+type CertRequest struct {
+	Domain string
+	Email  string
+	Method string
+	Plugin string // e.g. "dns-cloudflare"
+	Creds  string // absolute path to the plugin's credentials file (optional)
+}
+
+// IssueCert obtains a Let's Encrypt certificate for req.Domain with certbot,
 // then writes the cert/key paths into the matching config files. The caller
 // reloads the proxy afterwards so the new certificate is picked up.
-func IssueCert(dir, domain, email string) error {
+//
+//   - HTTP-01 (default): webroot mode with no downtime — the proxy serves the
+//     challenge on :80.
+//   - DNS-01: a certbot DNS plugin publishes a TXT record, so no inbound port
+//     is needed (works behind NAT) and wildcards are possible.
+func IssueCert(dir string, req CertRequest) error {
+	domain := req.Domain
 	if !domainExists(dir, domain) {
 		return fmt.Errorf("domain %q is not in any configuration — add a server for it first", domain)
 	}
-	if strings.TrimSpace(email) == "" {
+	email := strings.TrimSpace(req.Email)
+	if email == "" {
 		email = CertEmail()
 	}
-	if strings.TrimSpace(email) == "" {
+	if email == "" {
 		return fmt.Errorf("no Let's Encrypt email set — enter one (it is saved for next time)")
 	}
 	if !utils.IsValidEmail(email) {
@@ -120,18 +144,35 @@ func IssueCert(dir, domain, email string) error {
 	}
 	_ = saveCertEmail(email)
 
-	challengeDir := filepath.Join(AcmeWebroot, ".well-known", "acme-challenge")
-	if err := os.MkdirAll(challengeDir, 0o755); err != nil {
-		return fmt.Errorf("could not create ACME webroot: %w", err)
+	args := []string{"certonly", "--non-interactive", "--agree-tos", "-m", email, "-d", domain}
+
+	switch strings.ToLower(strings.TrimSpace(req.Method)) {
+	case "dns":
+		plugin := strings.TrimSpace(req.Plugin)
+		if !dnsPluginRe.MatchString(plugin) {
+			return fmt.Errorf("invalid DNS plugin name %q — expected something like dns-cloudflare", plugin)
+		}
+		args = append(args, "--"+plugin)
+		if creds := strings.TrimSpace(req.Creds); creds != "" {
+			if !filepath.IsAbs(creds) {
+				return fmt.Errorf("credentials path must be absolute: %q", creds)
+			}
+			if _, err := os.Stat(creds); err != nil {
+				return fmt.Errorf("credentials file not found: %s", creds)
+			}
+			args = append(args, "--"+plugin+"-credentials", creds)
+		}
+	case "", "http", "webroot":
+		challengeDir := filepath.Join(AcmeWebroot, ".well-known", "acme-challenge")
+		if err := os.MkdirAll(challengeDir, 0o755); err != nil {
+			return fmt.Errorf("could not create ACME webroot: %w", err)
+		}
+		args = append(args, "--webroot", "-w", AcmeWebroot)
+	default:
+		return fmt.Errorf("unknown challenge method %q — use \"http\" or \"dns\"", req.Method)
 	}
 
-	cmd := exec.Command("certbot", "certonly",
-		"--webroot", "-w", AcmeWebroot,
-		"-d", domain,
-		"--non-interactive", "--agree-tos",
-		"-m", email,
-	)
-	if out, err := cmd.CombinedOutput(); err != nil {
+	if out, err := exec.Command("certbot", args...).CombinedOutput(); err != nil {
 		return fmt.Errorf("certbot failed: %w\n%s", err, tail(out))
 	}
 	return writeTLSPaths(dir, domain)
